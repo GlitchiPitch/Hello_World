@@ -1,0 +1,27 @@
+{
+  "name": "HW_ver2",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+        "$className" : "ReplicatedStorage",
+        "$path": "Scripts/Replicated"
+    },
+
+    "ServerScriptService": {
+        "$className" : "ServerScriptService",
+        "$path": "Scripts/Server"
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+          "$className" : "StarterPlayerScripts",
+          "$path": "Scripts/Client/Player"
+      },
+      "StarterCharacterScripts": {
+        "$className" : "StarterCharacterScripts",
+        "$path" : "Scripts/Client/Character"
+      }
+    }
+  }
+}
