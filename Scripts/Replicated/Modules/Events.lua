@@ -9,7 +9,8 @@ local Events = {}
 -- }
 
 Events.Remotes = {
-    StartGame = Remotes.StartGame
+    StartGame = Remotes.StartGame,
+    SetupCamera = Remotes.SetupCamera
 }
 
 -- Events.StartGame = 

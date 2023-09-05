@@ -29,14 +29,19 @@ function GameManager.CreateStartMenu()
 	startButton.AnchorPoint = Vector2.new(0.5, 0.5)
 end
 
-function GameManager.CreateEvents() 
+function GameManager.CreateEvents()
     local Remotes = Instance.new('Folder')
     Remotes.Name = 'Remotes'
     Remotes.Parent = ReplicatedStorage
 
-    local s = Instance.new('RemoteEvent')
-    s.Name = 'StartGame'
-    s.Parent = Remotes
+	local function createEvent(name)
+		local s = Instance.new('RemoteEvent')
+		s.Name = name
+		s.Parent = Remotes
+	end
+
+	createEvent('StartGame')
+	createEvent('SetupCamera')
 end
 
 return GameManager

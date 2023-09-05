@@ -6,11 +6,14 @@ local Events = require(Modules.Events)
 
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
-
 local MainGui = ReplicatedFirst:WaitForChild('MainGui')
 
 local ClientManager = {}
 
+Events.Remotes.SetupCamera.OnClientEvent:Connect(function(propertyList)
+    local camera = workspace.CurrentCamera
+    camera.FieldOfView = propertyList.FieldOfView
+end)
 
 function ClientManager.StartGame(player)
     MainGui.Parent = player.PlayerGui
@@ -18,17 +21,6 @@ function ClientManager.StartGame(player)
         Events.Remotes.StartGame:FireServer()
         MainGui.Background:Destroy()
     end)
-end
-
-function ClientManager.SetupGui(player)
-    local playerGui = player.PlayerGui.MainGui
-
-end
-
-
-function ClientManager.SetupCamera()
-    local camera = workspace.CurrentCamera
-    camera.FieldOfView = 100 --propertyList.FieldOfView
 end
 
 
