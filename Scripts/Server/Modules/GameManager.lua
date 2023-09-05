@@ -1,13 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local EventsList = {
-	Remotes = {
-		'StartGame',
-		'SetupCamera'
-	},
-	Bindables = {}
-}
-
+local EventsList = require(ReplicatedStorage.Description).EventsList
 
 local GameManager = {}
 
@@ -38,9 +31,10 @@ function GameManager.CreateStartMenu()
 end
 
 function GameManager.CreateEvents()
-    local Remotes = Instance.new('Folder')
-	Remotes.Parent = ReplicatedStorage
-	Remotes.Name = 'Remotes'
+    local Remotes = ReplicatedStorage.Remotes
+    -- local Remotes = Instance.new('Folder')
+	-- Remotes.Parent = ReplicatedStorage
+	-- Remotes.Name = 'Remotes'
 
 	local function createEvent(name)
 		local s = Instance.new('RemoteEvent')

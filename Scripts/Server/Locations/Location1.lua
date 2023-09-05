@@ -5,11 +5,13 @@ local Location = {}
 
 Location.__index = Location
 
-Location.PlayerProperty = {WalkSpeed = 100, FieldOfView = 20}
+Location.PlayerProperty = {WalkSpeed = 8, FieldOfView = 20}
 Location.Name = 'Location1'
 
-function Location.Create(player, playerManager)
+function Location.Create(player, playerManager, events)
     local self = setmetatable({}, Location)
+
+    self.GameEvents = events
 
     self.Player = player
     self.PlayerManager = playerManager
@@ -40,7 +42,7 @@ function Location:SetupStages()
     coroutine.wrap(function()
         for i, stage in pairs(self.Stages) do
             local currentStage = require(stage)
-            currentStage.Create(self.Player, self.Map, LocationResourses)
+            currentStage.Create(self.Player, self.Map, LocationResourses, self.GameEvents)
         end
     end)()
 end
