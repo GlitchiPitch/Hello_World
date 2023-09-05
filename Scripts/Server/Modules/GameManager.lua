@@ -1,5 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local EventsList = {
+	Remotes = {
+		'StartGame',
+		'SetupCamera'
+	},
+	Bindables = {}
+}
+
 
 local GameManager = {}
 
@@ -31,8 +39,8 @@ end
 
 function GameManager.CreateEvents()
     local Remotes = Instance.new('Folder')
-    Remotes.Name = 'Remotes'
-    Remotes.Parent = ReplicatedStorage
+	Remotes.Parent = ReplicatedStorage
+	Remotes.Name = 'Remotes'
 
 	local function createEvent(name)
 		local s = Instance.new('RemoteEvent')
@@ -40,8 +48,10 @@ function GameManager.CreateEvents()
 		s.Parent = Remotes
 	end
 
-	createEvent('StartGame')
-	createEvent('SetupCamera')
+	for _, event in pairs(EventsList.Remotes) do
+		print(event)
+		createEvent(event)	
+	end
 end
 
 return GameManager

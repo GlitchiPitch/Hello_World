@@ -1,15 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
-local Modules = ServerScriptService.Modules
+
 local Locations = ServerScriptService.Locations
 
-
-
-
-local GameManager = require(Modules.GameManager)
-
-
-
+local GameManager = require(ServerScriptService.Modules.GameManager)
 
 local Game = {}
 
@@ -21,7 +15,6 @@ function Game.newGame(player)
 
     self.Player = player
     self.LocationIndex = 1
-    
 
     self:Init()
 
@@ -40,19 +33,15 @@ function Game:Preload()
     GameManager.CreateEvents()
     GameManager.CreateStartMenu()
 
-    self.PlayerManager = require(Modules.PlayerManager)
+    self.PlayerManager = require(ServerScriptService.Modules.PlayerManager)
     self.Events = require(ReplicatedStorage.Modules.Events)
 end
 
 function Game:StartGame()
-    self.Player:LoadCharacter()
     for i = 2, #Locations:GetChildren() do
         local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
-        self.PlayerManager.SetupCharacter(self.Player, location.PlayerProperty)
+        location.Create(self.Player, self.PlayerManager)
     end
-    -- self.StartMenu = GameManager.StartMenu()
-    -- self.StartMenu.Background.StartButton.Mouse.MouseButton1Click:Wait()
-
 end
 
 return Game
