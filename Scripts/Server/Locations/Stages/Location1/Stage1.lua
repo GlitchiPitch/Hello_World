@@ -5,11 +5,11 @@ local PETS_QUANTITY = 10
 local Stage = {}
 Stage.__index = Stage
 
-function Stage.Create(player, map, resourses, gameEvents)
+function Stage.Create(game_, map, resourses)
     local self = setmetatable({}, Stage)
 
-    self.GameEvents = gameEvents
-    self.Player = player
+    self.Game = game_
+    -- self.Player = player
     self.Map = map
     self.Resourses = resourses
 
@@ -43,13 +43,13 @@ function Stage:Pets()
         triggered.Changed:Connect(function(value)
             if value then 
                 savedPets += 1
-                self.GameEvents.Remotes.UpdateClient:FireClient(self.Player, savedPets)
+                self.Game.Events.Remotes.UpdateClient:FireClient(self.Game.Player, savedPets)
                 game:GetService('CollectionService'):RemoveTag(pet, 'Interact')
-                self:CreateVoid(self.Player.Character.HumanoidRootPart.CFrame, savedPets)
+                self:CreateVoid(self.Game.Player.Character.HumanoidRootPart.CFrame, savedPets)
             end
         end)
 
-        self.GameEvents.Remotes.Interact.OnServerEvent:Connect(function()
+        self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function()
             triggered.Value = true
         end)
     end
@@ -72,18 +72,26 @@ function Stage:CreateVoid(playerCFrame, savedPets)
         CFrame.new(rand(xPl - 100, xPl), rand(yPl, yPl + 20), rand(zPl - 100, zPl))
     }
     
-    local function createPart(targetCFrame)
+    local function setupVoid(void)
+        void.Touched:connect(function(hitPart)
+            if not hitPart.Parent:FindFirstChild('Humanoid') then return end
+            self.Game.PlayerManager.SetupCharacter(self.Game.Player, {WalkSpeed = 0})
+        end)
+    end
+
+    local function createVoid(targetCFrame)
         local p = Instance.new('Part')
         p.Parent = workspace
         p.Size = Vector3.new(10,10,10)
         p.Anchored = true
         p.BrickColor = BrickColor.Black()
         p.CFrame = targetCFrame
+        setupVoid(p)
     end
     
     for i = 1, savedPets do
         local targetCFrame = cframes[rand(#cframes)]
-        createPart(targetCFrame)
+        createVoid(targetCFrame)
     end
 end
 

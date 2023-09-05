@@ -40,7 +40,7 @@ end
 function Game:StartGame()
     for i = 2, #Locations:GetChildren() do
         local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
-        location.Create(self.Player, self.PlayerManager, self.Events)
+        location.Create(self)
     end
 end
 

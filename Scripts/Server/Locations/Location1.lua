@@ -8,13 +8,14 @@ Location.__index = Location
 Location.PlayerProperty = {WalkSpeed = 8, FieldOfView = 40}
 Location.Name = 'Location1'
 
-function Location.Create(player, playerManager, events)
+function Location.Create(game_)
     local self = setmetatable({}, Location)
 
-    self.GameEvents = events
+    self.Game = game_
+    -- self.GameEvents = events
 
-    self.Player = player
-    self.PlayerManager = playerManager
+    -- self.Player = player
+    -- self.PlayerManager = playerManager
     
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
     self.Stages = script.Parent.Stages:FindFirstChild(Location.Name):GetChildren()
@@ -29,8 +30,8 @@ function Location:Init()
     self:SetupMap()
     self:SetupStages()
 
-    self.Player:LoadCharacter()
-    self.PlayerManager.SetupCharacter(self.Player, Location.PlayerProperty)
+    self.Game.Player:LoadCharacter()
+    self.Game.PlayerManager.SetupCharacter(self.Game.Player, Location.PlayerProperty)
 end
 
 function Location:SetupMap()
@@ -42,7 +43,7 @@ function Location:SetupStages()
     coroutine.wrap(function()
         for i, stage in pairs(self.Stages) do
             local currentStage = require(stage)
-            currentStage.Create(self.Player, self.Map, LocationResourses, self.GameEvents)
+            currentStage.Create(self.Game, self.Map, LocationResourses)
         end
     end)()
 end
