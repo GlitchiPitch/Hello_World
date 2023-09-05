@@ -15,8 +15,8 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(propertyList)
     camera.FieldOfView = propertyList.FieldOfView
 end)
 
-Events.Remotes.UpdateClient.OnClientEvent:Connect(function()
-    print('update')
+Events.Remotes.UpdateClient.OnClientEvent:Connect(function(...)
+    print(...)
 end)
 
 function ClientManager.StartGame(player)
