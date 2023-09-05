@@ -5,9 +5,14 @@ Description.EventsList =
 	Remotes = {
 		'StartGame',
 		'SetupCamera',
-		'UpdateClient'
+		'UpdateClient',
+		'Interact'
 	},
 	Bindables = {}
+}
+
+Description.Tags = {
+	'Interact'
 }
 
 return Description

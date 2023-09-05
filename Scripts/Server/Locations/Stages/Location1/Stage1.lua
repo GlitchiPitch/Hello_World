@@ -24,24 +24,30 @@ function Stage:Init()
 end
 
 function Stage:Pets()
+
+    local petsList = {}
     -- get pets
     -- spawn in random places
     local function setup(pet)
         -- surface gui 
         -- position
         -- tag
+        game:GetService('CollectionService'):AddTag(pet, 'Interact')
 
         local triggered = Instance.new('BoolValue')
         triggered.Parent = pet
         triggered.Name = TRIGGER_NAME
 
         triggered.Changed:Connect(function(value)
-            if value then self.GameEvents.Remotes.UpdateClient:FireClient(self.Player) end
+            if value then 
+                self.GameEvents.Remotes.UpdateClient:FireClient(self.Player)
+                game:GetService('CollectionService'):RemoveTag(pet, 'Interact')
+            end
         end)
 
-        task.wait(10)
-
-        triggered.Value = true
+        self.GameEvents.Remotes.Interact.OnServerEvent:Connect(function()
+            triggered.Value = true
+        end)
     end
 
     -- for i, pet in pairs(petsList) do
@@ -50,7 +56,7 @@ function Stage:Pets()
         pet.Parent = workspace
         pet.Position = Vector3.new(0.6, 50.5, 12)
         setup(pet)
-
+        table.insert(petsList, pet)
         wait(5)
     end     
 end

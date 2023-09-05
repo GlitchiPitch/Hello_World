@@ -20,6 +20,28 @@ Events.Remotes.UpdateClient.OnClientEvent:Connect(function()
 end)
 
 function ClientManager.StartGame(player)
+    ClientManager.SetupStartMenu(player)
+    ClientManager.SetupMouseBehaviour(player)
+end
+
+function ClientManager.SetupMouseBehaviour(player)
+    local mouse = player:GetMouse()
+    -- mouse.Move:Connect(function()
+        -- if game:GetService('CollectionService'):HasTag(mouse.Target, 'Interact') then
+
+        -- end    
+    -- end)
+    
+    mouse.Button1Down:Connect(function()
+        local target = mouse.Target
+        if target and game:GetService('CollectionService'):HasTag(target, 'Interact') then
+            Events.Remotes.Interact:FireServer()
+        end
+    end)
+
+end
+
+function ClientManager.SetupStartMenu(player)
     MainGui.Parent = player.PlayerGui
     MainGui.Background.StartButton.MouseButton1Click:Connect(function()
         Events.Remotes.StartGame:FireServer()
