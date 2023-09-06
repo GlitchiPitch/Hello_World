@@ -1,5 +1,7 @@
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
 
 local Modules = ReplicatedStorage:WaitForChild('Modules')
 local Events = require(Modules.Events)
@@ -8,9 +10,14 @@ ReplicatedFirst:RemoveDefaultLoadingScreen()
 
 local MainGui = ReplicatedFirst:WaitForChild('MainGui')
 
+
+local TRIGGERED_MAGNITUDE = 100
+
 local ClientManager = {}
 
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(propertyList)
+
+
     local camera = workspace.CurrentCamera
     camera.FieldOfView = propertyList.FieldOfView
 end)
@@ -34,7 +41,8 @@ function ClientManager.SetupMouseBehaviour(player)
     
     mouse.Button1Down:Connect(function()
         local target = mouse.Target
-        if target and game:GetService('CollectionService'):HasTag(target, 'Interact') then
+        local magnitude = (target.Position - player.Character.HumanoidRootPart.Position).Magnitude
+        if target and magnitude < TRIGGERED_MAGNITUDE and game:GetService('CollectionService'):HasTag(target, 'Interact') then
             Events.Remotes.Interact:FireServer()
         end
     end)

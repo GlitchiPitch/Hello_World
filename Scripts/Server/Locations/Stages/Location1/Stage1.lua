@@ -54,7 +54,6 @@ function Stage:Pets()
         end)
     end
 
-    -- for i, pet in pairs(petsList) do
     for i = 1, PETS_QUANTITY do
         local pet = Instance.new('Part')
         pet.Parent = workspace
@@ -75,7 +74,7 @@ function Stage:CreateVoid(playerCFrame, savedPets)
     local function setupVoid(void)
         void.Touched:connect(function(hitPart)
             if not hitPart.Parent:FindFirstChild('Humanoid') then return end
-            self.Game.PlayerManager.SetupCharacter(self.Game.Player, {WalkSpeed = 0})
+            self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = 0}})
         end)
     end
 
