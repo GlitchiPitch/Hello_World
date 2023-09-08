@@ -188,7 +188,8 @@ function ClientManager.SetupMouseBehaviour(player)
     mouse.Button1Down:Connect(function()
         local target = mouse.Target
         if target and game:GetService('CollectionService'):HasTag(target, 'Interact') then
-            Events.Remotes.Interact:FireServer(target:GetAttribute('Role'))
+            -- print('client')
+            Events.Remotes.Interact:FireServer(target:GetAttribute('Role'), target)
         end
     end)
 
