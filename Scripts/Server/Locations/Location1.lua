@@ -5,26 +5,13 @@ local Location = {}
 
 Location.__index = Location
 
-Location.PlayerProperty = {
-    Character = {
-        WalkSpeed = 8
-    }, 
-
-    Camera = {
-        FieldOfView = 80
-    }
-}
-
+Location.PlayerProperty = {WalkSpeed = 8, FieldOfView = 40}
 Location.Name = 'Location1'
 
 function Location.Create(game_)
     local self = setmetatable({}, Location)
 
     self.Game = game_
-    -- self.GameEvents = events
-
-    -- self.Player = player
-    -- self.PlayerManager = playerManager
     
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
     self.Stages = script.Parent.Stages:FindFirstChild(Location.Name):GetChildren()

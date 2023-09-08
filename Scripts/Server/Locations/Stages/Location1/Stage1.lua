@@ -54,7 +54,6 @@ function Stage:Pets()
         end)
     end
 
-    -- for i, pet in pairs(petsList) do
     for i = 1, PETS_QUANTITY do
         local pet = Instance.new('Part')
         pet.Parent = workspace
