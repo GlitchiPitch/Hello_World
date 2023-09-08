@@ -24,6 +24,7 @@ end
 function Game:Init()
     self:Preload()
     self.Events.Remotes.StartGame.OnServerEvent:Wait()
+    print('Start Game')
     self:StartGame()
 end
 

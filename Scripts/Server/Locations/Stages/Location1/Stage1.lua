@@ -19,7 +19,7 @@ function Stage.Create(game_, map, resourses)
 end
 
 function Stage:Init()
-    print('Stage 1 init')
+    -- print('Stage 1 init')
     self:Pets()
     
     -- self.Triggers = self.Map:FindFirstChild('Triggers')

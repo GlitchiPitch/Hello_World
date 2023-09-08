@@ -11,23 +11,16 @@ StarterPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 local PlayerManager = {}
 
 function PlayerManager.SetupCharacter(player, propertyList)
+    local character = player.Character
+    local humanoid = character:FindFirstChild('Humanoid')
+    humanoid.WalkSpeed = propertyList.WalkSpeed
 
-    if propertyList.Character then
-        -- print('setup char')
-        local character = player.Character
-        local humanoid = character:FindFirstChild('Humanoid')
-        humanoid.WalkSpeed = propertyList.Character.WalkSpeed
-    end
-
-    if propertyList.Camera then
-        PlayerManager.SetupCamera(player, propertyList)
-    end
+    PlayerManager.SetupCamera(player, propertyList)
 end
 
 
 function PlayerManager.SetupCamera(player, propertyList)
-    -- print('setup cam')
-    Events.Remotes.SetupCamera:FireClient(player, propertyList.Camera)
+    Events.Remotes.SetupCamera:FireClient(player, propertyList)
 end
 
 

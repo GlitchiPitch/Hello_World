@@ -5,14 +5,7 @@ local Location = {}
 
 Location.__index = Location
 
-Location.PlayerProperty = {
-Character = {
-    WalkSpeed = 8
-},
-Camera = {
-    FieldOfView = 40
-}
-}
+Location.PlayerProperty = {WalkSpeed = 8, FieldOfView = 40}
 Location.Name = 'Location1'
 
 function Location.Create(game_)

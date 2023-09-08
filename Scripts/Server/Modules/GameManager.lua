@@ -43,7 +43,7 @@ function GameManager.CreateEvents()
 	end
 
 	for _, event in pairs(EventsList.Remotes) do
-		print(event)
+		-- print(event)
 		createEvent(event)	
 	end
 end
