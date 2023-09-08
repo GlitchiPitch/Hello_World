@@ -10,6 +10,7 @@ local Game = {}
 Game.__index = Game
 
 function Game.newGame(player)
+    -- print(player)
     local self = setmetatable({}, Game)
 
     self.Player = player
@@ -24,7 +25,7 @@ end
 function Game:Init()
     self:Preload()
     self.Events.Remotes.StartGame.OnServerEvent:Wait()
-    print('Start Game')
+    -- print('Start Game')
     self:StartGame()
 end
 
