@@ -8,6 +8,8 @@ local Events = require(ReplicatedModules.Events)
 Players.CharacterAutoLoads = false
 StarterPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 
+-- надо сделать моедльку игрока невидимой и поправить offset в установке камеры
+
 local PlayerManager = {}
 
 function PlayerManager.SetupCharacter(player, propertyList)

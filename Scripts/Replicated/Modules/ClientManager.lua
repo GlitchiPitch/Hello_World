@@ -5,16 +5,6 @@ local UserInputService = game:GetService("UserInputService")
 
 
 
-
-
-
-local AngleX,TargetAngleX = 0,0
-local AngleY,TargetAngleY = 0,0
-
-local Sensitivity = 0.6
-local Smoothness = 0.05
-local HeadOffset = CFrame.new(0,5,0)
-
 local Modules = ReplicatedStorage:WaitForChild('Modules')
 local Events = require(Modules.Events)
 
@@ -25,6 +15,12 @@ local MainGui = ReplicatedFirst:WaitForChild('MainGui')
 local ClientManager = {}
 
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
+
+    local AngleX,TargetAngleX = 0,0
+    local AngleY,TargetAngleY = 0,0
+    local Sensitivity = 0.6
+    local Smoothness = 0.05
+    local HeadOffset = CFrame.new(0,5,0)
 
     local Camera = workspace.CurrentCamera
     Camera.CameraType = Enum.CameraType.Scriptable
@@ -116,7 +112,6 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
         end
 
         if (Camera.Focus.Position - Camera.CFrame.Position).Magnitude < 1 then
-            print('mag')
             running = false
         else
             running = true

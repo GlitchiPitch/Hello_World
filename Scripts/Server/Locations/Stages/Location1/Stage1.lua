@@ -25,6 +25,7 @@ function Stage:Init()
     
     self:Pets()
     repeat wait() until self.IsReady
+    -- dissconnect remotes
     -- self.Triggers = self.Map:FindFirstChild('Triggers')
 end
 
