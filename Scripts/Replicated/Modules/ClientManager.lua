@@ -69,13 +69,11 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     UserInputService.InputChanged:Connect(function(inputObject)
 
         if inputObject.UserInputType == Enum.UserInputType.MouseMovement then
-            -- print('mouse movement')
             local delta = Vector2.new(inputObject.Delta.X / Sensitivity, inputObject.Delta.Y / Sensitivity) * Smoothness
             local X = TargetAngleX - delta.Y
             TargetAngleX = (X >= 80 and 80) or (X <= -80 and -80) or X 
             TargetAngleY = (TargetAngleY - delta.X) % 360
         end	
-    
     end)
 
     UserInputService.InputBegan:Connect(function(inputObject)
@@ -103,13 +101,11 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     RunService.RenderStepped:Connect(function()
 
         if running then
-            -- print('runni')
             CamPos *= 0.28 
             AngleX += (TargetAngleX - AngleX) * 0.35 
             local dist = TargetAngleY - AngleY 
             dist = math.abs(dist) > 180 and dist - (dist / math.abs(dist)) * 360 or dist 
             AngleY = (AngleY + dist * 0.35) % 360
-            
             
             Camera.CFrame = CFrame.new(head.Position) 
 			* CFrame.Angles(0, math.rad(AngleY), 0) 
@@ -124,7 +120,6 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             running = false
         else
             running = true
-            
         end
 
         Camera.FieldOfView = FieldOfView
@@ -152,7 +147,6 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
 			FieldOfView = lerp(FieldOfView, walkspeeds.runningFOV, easingtime)
 			human.WalkSpeed = lerp(human.WalkSpeed, human.WalkSpeed + (walkspeeds.runningspeed - human.WalkSpeed), easingtime)
 		end
-
 
         local amOfBubbleX = .5
         local amOfBubbleY = .5
@@ -188,7 +182,6 @@ function ClientManager.SetupMouseBehaviour(player)
     mouse.Button1Down:Connect(function()
         local target = mouse.Target
         if target and game:GetService('CollectionService'):HasTag(target, 'Interact') then
-            -- print('client')
             Events.Remotes.Interact:FireServer(target:GetAttribute('Role'), target)
         end
     end)

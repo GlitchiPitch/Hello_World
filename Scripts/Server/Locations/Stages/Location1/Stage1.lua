@@ -10,10 +10,8 @@ function Stage.Create(game_, map, resourses)
     local self = setmetatable({}, Stage)
 
     self.Game = game_
-    -- self.Player = player
     self.Map = map
     self.Resourses = resourses
-
     self.IsReady = false
 
     self:Init()
@@ -35,8 +33,9 @@ function Stage:SubsRemote()
         if interactRole == 'pet' then
             local pet = ...
             pet:FindFirstChild(TRIGGER_NAME).Value = true
+        elseif interactRole == 'void' then
+            self.IsReady = true
         end
-        -- triggered.Value = true
     end)
 end
 
@@ -66,19 +65,16 @@ function Stage:Pets()
             end
         end)
 
-        -- перписать ремоте чтобы для каждого пэта было отдельно, скорее всег надо в ините прописать получение сигнала с клиента внутри класса создание ивентов для каждого пэта
-        -- self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function()
-        --     print('wrong')
-        --     triggered.Value = true
-        -- end)
     end
+
+    local rand = math.random
 
     for i = 1, PETS_QUANTITY do
         local pet = Instance.new('Part')
         pet.Parent = workspace
-        pet.Position = Vector3.new(0.6, 50.5, 12)
+        pet.Position = Vector3.new(rand(0.6, .6 * 5), 50.5, rand(0, 12))
         setup(pet)
-        wait(5)
+        -- wait(5)
     end     
 end
 
@@ -96,7 +92,7 @@ function Stage:CreateVoid(playerCFrame, savedPets)
         void.Touched:connect(function(hitPart)
             if not hitPart.Parent:FindFirstChild('Humanoid') then return end
             print('touch')
-            self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = 0}})
+            hitPart.Parent:FindFirstChild('HumanoidRootPart').Anchored = true
         end)
     end
 
