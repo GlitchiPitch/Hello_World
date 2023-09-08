@@ -1,3 +1,4 @@
+local CollectionService = game:GetService("CollectionService")
 local TRIGGER_NAME = 'Saved'
 
 local PETS_QUANTITY = 10
@@ -34,7 +35,9 @@ function Stage:Pets()
         -- surface gui 
         -- position
         -- tag
-        game:GetService('CollectionService'):AddTag(pet, 'Interact')
+
+        pet:SetAttribute('Role', 'pet')
+        CollectionService:AddTag(pet, 'Interact')
 
         local triggered = Instance.new('BoolValue')
         triggered.Parent = pet
@@ -49,6 +52,7 @@ function Stage:Pets()
             end
         end)
 
+        -- перписать ремоте чтобы для каждого пэта было отдельно, скорее всег надо в ините прописать получение сигнала с клиента внутри класса создание ивентов для каждого пэта
         self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function()
             triggered.Value = true
         end)
@@ -72,6 +76,8 @@ function Stage:CreateVoid(playerCFrame, savedPets)
     }
     
     local function setupVoid(void)
+        void:SetAttribute('Role', 'void')
+        CollectionService:AddTag(void, 'Interact')
         void.Touched:connect(function(hitPart)
             if not hitPart.Parent:FindFirstChild('Humanoid') then return end
             self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = 0}})

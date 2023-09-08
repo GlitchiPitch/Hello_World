@@ -41,14 +41,23 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     local human = components.Humanoid
 
     local walkspeeds = {
-        enabled =		  true;
-        walkingspeed =		8;
-        backwardsspeed =	10;
-        sidewaysspeed =		15;
-        diagonalspeed =		16;
-        runningspeed =		25;
-        runningFOV=			100;
+        enabled = true;
+        walkingspeed = propertyList.Character.WalkSpeed; 
+        backwardsspeed = propertyList.Character.WalkSpeed + 2; 
+        sidewaysspeed =	propertyList.Character.WalkSpeed + 7;
+        diagonalspeed =	propertyList.Character.WalkSpeed * 2; 
+        runningspeed = propertyList.Character.WalkSpeed * 3; 
+        runningFOV=	propertyList.Camera.FieldOfView + (propertyList.Camera.FieldOfView * .5); 
     }
+    -- local walkspeeds = {
+    --     enabled =		  true;
+    --     walkingspeed =		8; propertyList.Character.WalkSpeed
+    --     backwardsspeed =	10; propertyList.Character.WalkSpeed + 2
+    --     sidewaysspeed =		15; propertyList.Character.WalkSpeed + 7
+    --     diagonalspeed =		16; propertyList.Character.WalkSpeed * 2
+    --     runningspeed =		25; propertyList.Character.WalkSpeed * 3
+    --     runningFOV=			100; propertyList.Camera.FieldOfView + (propertyList.Camera.FieldOfView * .5)
+    -- }
 
     local w, a, s, d, lshift = false, false, false, false, false
 
@@ -179,7 +188,7 @@ function ClientManager.SetupMouseBehaviour(player)
     mouse.Button1Down:Connect(function()
         local target = mouse.Target
         if target and game:GetService('CollectionService'):HasTag(target, 'Interact') then
-            Events.Remotes.Interact:FireServer()
+            Events.Remotes.Interact:FireServer(target:GetAttribute('Role'))
         end
     end)
 

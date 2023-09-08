@@ -12,16 +12,20 @@ local PlayerManager = {}
 
 function PlayerManager.SetupCharacter(player, propertyList)
     local character = player.Character
-    local humanoid = character:FindFirstChild('Humanoid')
-    humanoid.WalkSpeed = propertyList.WalkSpeed
-
-    PlayerManager.SetupCamera(player, propertyList)
+    local humanoid = character:FindFirstChild("Humanoid")
+	if propertyList.Character then
+		humanoid.WalkSpeed = propertyList.WalkSpeed
+	end
+    
+    if propertyList.Camera then
+        local head = character:FindFirstChild('Head')
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        PlayerManager.SetupCamera(player, {Humanoid = humanoid, HumanoidRootPart = humanoidRootPart, Head = head}, propertyList)
+    end
 end
 
-
-function PlayerManager.SetupCamera(player, propertyList)
-    Events.Remotes.SetupCamera:FireClient(player, propertyList)
+function PlayerManager.SetupCamera(player, components, propertyList)
+	Events.Remotes.SetupCamera:FireClient(player, components, propertyList)
 end
-
 
 return PlayerManager
