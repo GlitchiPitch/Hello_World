@@ -4,16 +4,16 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 
-local Camera = workspace.CurrentCamera
-Camera.CameraType = Enum.CameraType.Scriptable
 
-local CamPos = Camera.CFrame.Position
+
+
+
 local AngleX,TargetAngleX = 0,0
 local AngleY,TargetAngleY = 0,0
 
 local Sensitivity = 0.6
 local Smoothness = 0.05
-local HeadOffset = CFrame.new(0,0.7,0)
+local HeadOffset = CFrame.new(0,5,0)
 
 local Modules = ReplicatedStorage:WaitForChild('Modules')
 local Events = require(Modules.Events)
@@ -26,6 +26,12 @@ local ClientManager = {}
 
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
 
+    local Camera = workspace.CurrentCamera
+    Camera.CameraType = Enum.CameraType.Scriptable
+    
+    UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+    
+    local CamPos = Camera.CFrame.Position
     local FieldOfView = propertyList.Camera.FieldOfView
     local defFOV = FieldOfView
     local running = true
@@ -44,12 +50,11 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
         runningFOV=			100;
     }
 
-    local w, a, s, d = false, false, false, false
+    local w, a, s, d, lshift = false, false, false, false, false
 
     local function lerp(a, b, t)
         return a * (1-t) + (b*t)
     end
-    
 
     UserInputService.InputChanged:Connect(function(inputObject)
 
@@ -70,7 +75,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             if inputObject.KeyCode == Enum.KeyCode.A then a = true end
             if inputObject.KeyCode == Enum.KeyCode.S then s = true end
             if inputObject.KeyCode == Enum.KeyCode.D then d = true end
-            -- if inputObject.KeyCode == Enum.KeyCode.LeftShift then lshift = true end
+            if inputObject.KeyCode == Enum.KeyCode.LeftShift then lshift = true end
         end
     end)
     
@@ -81,7 +86,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             if inputObject.KeyCode == Enum.KeyCode.A then a = false	end
             if inputObject.KeyCode == Enum.KeyCode.S then s = false	end
             if inputObject.KeyCode == Enum.KeyCode.D then d = false	end
-            -- if inputObject.KeyCode == Enum.KeyCode.LeftShift then lshift = false end
+            if inputObject.KeyCode == Enum.KeyCode.LeftShift then lshift = false end
         end
     end)
 
@@ -108,8 +113,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             print('mag')
             running = false
         else
-            running = true
-            game:GetService("UserInputService").MouseBehavior = Enum.MouseBehavior.LockCenter
+            running = true     
         end
 
         Camera.FieldOfView = FieldOfView
@@ -119,7 +123,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
         if walkspeeds.enabled then
             if w and s then return end
     
-            if w then --not lshift
+            if w and not lshift then
                 FieldOfView = lerp(FieldOfView, defFOV, easingtime)
                 human.WalkSpeed = lerp(human.WalkSpeed ,walkspeeds.walkingspeed, easingtime)
             elseif (w and a) or (w and d) then
@@ -131,6 +135,26 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             elseif d or a then
                 human.WalkSpeed = lerp(human.WalkSpeed,walkspeeds.sidewaysspeed, easingtime)
             end	
+        end
+
+        if lshift and w then
+			FieldOfView = lerp(FieldOfView, walkspeeds.runningFOV, easingtime)
+			human.WalkSpeed = lerp(human.WalkSpeed, human.WalkSpeed + (walkspeeds.runningspeed - human.WalkSpeed), easingtime)
+		end
+
+        local amOfBubbleX = .5
+        local amOfBubbleY = .5
+
+        if human.MoveDirection.Magnitude > 0 then
+            local currTime = tick()
+            local bobX = math.cos(currTime * 10) * amOfBubbleX
+            local bobY = math.sin(math.abs(currTime * 10)) * amOfBubbleY
+    
+            local bobble = Vector3.new(bobX,bobY,0)
+    
+            human.CameraOffset = human.CameraOffset:Lerp(bobble, .25)
+        else
+            human.CameraOffset *= .75
         end
     end)    
 end)
