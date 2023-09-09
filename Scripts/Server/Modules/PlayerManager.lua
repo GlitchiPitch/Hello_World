@@ -9,6 +9,7 @@ Players.CharacterAutoLoads = false
 StarterPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 
 -- надо сделать моедльку игрока невидимой и поправить offset в установке камеры
+-- добавить стартер чарактер просто нуба и сделать все его детали неввидимыми
 
 local PlayerManager = {}
 

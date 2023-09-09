@@ -27,7 +27,7 @@ function Location.Create(game_)
     -- self.PlayerManager = playerManager
     
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
-    self.Stages = script.Parent.Stages:FindFirstChild(Location.Name):GetChildren()
+    self.Stages = script.Parent.Stages:FindFirstChild(Location.Name) --:GetChildren()
 
     self:Init()
 
@@ -50,10 +50,12 @@ end
 
 function Location:SetupStages()
     coroutine.wrap(function()
-        for i, stage in pairs(self.Stages) do
+        for i, stage in pairs(self.Stages:GetChildren()) do
             local currentStage = require(stage)
             currentStage.Create(self.Game, self.Map, LocationResourses)
         end
+        -- local currentStage = require(self.Stages.Stage2)
+        -- currentStage.Create(self.Game, self.Map, LocationResourses)
     end)()
 end
 

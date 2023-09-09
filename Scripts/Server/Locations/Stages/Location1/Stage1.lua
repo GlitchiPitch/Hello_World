@@ -3,6 +3,12 @@ local TRIGGER_NAME = 'Saved'
 
 local PETS_QUANTITY = 10
 
+local petsFolder = Instance.new('Folder')
+petsFolder.Parent = workspace
+
+local voidFolder = Instance.new('Folder')
+voidFolder.Parent = workspace
+
 local Stage = {}
 Stage.__index = Stage
 
@@ -13,6 +19,9 @@ function Stage.Create(game_, map, resourses)
     self.Map = map
     self.Resourses = resourses
     self.IsReady = false
+
+    self.PetsFolder = petsFolder
+    self.VoidsFolder = voidFolder
 
     self:Init()
 
@@ -27,15 +36,19 @@ function Stage:Init()
     repeat wait() until self.IsReady
     -- dissconnect remotes
     -- self.Triggers = self.Map:FindFirstChild('Triggers')
+    self.InteractRemote:Disconnect()
 end
 
 function Stage:SubsRemote()
-    self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player, interactRole, ...)
+    self.InteractRemote = self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player, interactRole, ...)
         if interactRole == 'pet' then
             local pet = ...
             pet:FindFirstChild(TRIGGER_NAME).Value = true
         elseif interactRole == 'void' then
             self.IsReady = true
+            self.Game.Player.Character.HumanoidRootPart.Anchored = false
+            self.PetsFolder:Destroy()
+            self.VoidsFolder:Destroy()
         end
     end)
 end
@@ -72,7 +85,7 @@ function Stage:Pets()
 
     for i = 1, PETS_QUANTITY do
         local pet = Instance.new('Part')
-        pet.Parent = workspace
+        pet.Parent = self.PetsFolder
         pet.Position = Vector3.new(rand(0.6, .6 * 5), 50.5, rand(0, 12))
         setup(pet)
         -- wait(5)
@@ -99,7 +112,7 @@ function Stage:CreateVoid(playerCFrame, savedPets)
 
     local function createVoid(targetCFrame)
         local p = Instance.new('Part')
-        p.Parent = workspace
+        p.Parent = self.VoidsFolder
         p.Size = Vector3.new(10,10,10)
         p.Anchored = true
         p.BrickColor = BrickColor.Black()
