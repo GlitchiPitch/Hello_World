@@ -50,12 +50,12 @@ end
 
 function Location:SetupStages()
     coroutine.wrap(function()
-        for i, stage in pairs(self.Stages:GetChildren()) do
-            local currentStage = require(stage)
-            currentStage.Create(self.Game, self.Map, LocationResourses)
-        end
-        -- local currentStage = require(self.Stages.Stage2)
-        -- currentStage.Create(self.Game, self.Map, LocationResourses)
+        -- for i, stage in pairs(self.Stages:GetChildren()) do
+        --     local currentStage = require(stage)
+        --     currentStage.Create(self.Game, self.Map, LocationResourses)
+        -- end
+        local currentStage = require(self.Stages.Stage2)
+        currentStage.Create(self.Game, self.Map, LocationResourses)
     end)()
 end
 
