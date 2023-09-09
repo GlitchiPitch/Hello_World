@@ -5,7 +5,7 @@ local Stage = {}
 
 -- dont forget uncomment 38 line about spawn character
 
-local CLOCK_TIME = 14
+local CLOCK_TIME = 0
 
 Stage.__index = Stage
 
@@ -36,6 +36,10 @@ function Stage:Init()
     for i = 1, 3 do -- level count
         self:SpawnRoom(i)
         -- self.Game.Player.Character.HumanoidRootPart.CFrame = self.PlayerSpawnPoint.CFrame
+        -- local light = Instance.new('PointLight')
+        -- light.Brightness = 10
+        -- local c = self.Game.Player.CharacterAdded:Wait()
+        -- light.Parent = c:WaitForChild('Head')
         repeat wait() until self.Level > i
     end
 end
@@ -93,29 +97,39 @@ function Stage:CreateContent(room, properties)
 
     local nodes = {}
     local _, roomSize = room:GetBoundingBox()
-    print(roomSize)
-    local xQuantity = roomSize.X % wallSize
-    local yQuantity = roomSize.Y % wallSize
-
-    -- local start = room:GetPivot().Position - Vector3.new()
-    -- local x = 1 -- into loop
-    -- local y = 1 -- into loop
+    local xQuantity = math.floor(roomSize.X / wallSize * .5)
+    local yQuantity = math.floor(roomSize.Z / wallSize * .5)
    
-    print(xQuantity, yQuantity)
-    for x = 1, xQuantity do
-        for z = 1, yQuantity do
+    local x = 1
+    local z = 1
+
+    for j = 1, xQuantity do
+        for _, i in pairs(
+            {{0, z},
+            {0, -z},
+            {x, 0},
+            {-x, 0}}
+        ) do
+            table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))      
+        end
+        z += 1
+        x += 1
+    end
+
+    for z = 1, xQuantity do
+        for x = 1, yQuantity do
             for _, i in pairs({
                 {x, z},
                 {-x, z},
                 {x, -z},
-                {-x, -z}
+                {-x, -z},
             }) do
                 table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))      
             end
         end
     end
-    
 
+    print(nodes)
     local function setupTarget(target)
 
         target.Material = Enum.Material.Neon
@@ -147,6 +161,9 @@ function Stage:CreateContent(room, properties)
 
     local function setupWalls(wall)
         wall.Color = Color3.new(.5,.5,.5)
+        local size = {{wallSize - 2, properties.ySize, 1}, {1, properties.ySize, wallSize - 2}}
+        wall.Size = Vector3.new(table.unpack(size[math.random(#size)]))
+        -- wall.Size = Vector3.new(5, properties.ySize, 5)
     end
     local function createPart(name)
         local part = Instance.new('Part')
@@ -168,15 +185,27 @@ function Stage:CreateContent(room, properties)
 
         return part
     end
+    local a = math.random(#nodes)
+    local spawnIndex = a  
+    a = math.random(#nodes / 2, #nodes)
+    local targetIndex = spawnIndex ~= a and a or  a - 1
 
-    for _, pos in pairs(nodes) do
-        local part = createPart('wall')
+    for i, pos in pairs(nodes) do
+        -- if math.random(2) == 1 then continue end
+        local part
+        if i == spawnIndex then
+            part = createPart('spawn')
+        elseif i == targetIndex then
+            part = createPart('target')
+        else
+            part = createPart('wall')
+        end
         part.Position = pos
+        -- part.Name = i
+        -- wait(2)
     end
 
     
-    -- createPart('spawn')
-    -- createPart('target')
 
 
 end
@@ -186,3 +215,28 @@ function Stage:CreatePortal()
 end
 
 return Stage
+
+
+--[[
+
+for j = 1, xQuantity do
+        for h = 1, yQuantity do
+            for _, i in pairs({
+                {x, z},
+                {-x, z},
+                {x, -z},
+                {-x, -z},
+                {0, z},
+                {0, -z},
+                {x, 0},
+                {-x, 0},
+            }) do
+                table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))      
+            end
+            x += 1
+        end
+        z += 1
+    end
+
+
+]]
