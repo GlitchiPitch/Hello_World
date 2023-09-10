@@ -41,6 +41,7 @@ end
 
 function Game:StartGame()
     for i = 2, #Locations:GetChildren() do
+        print('start Location')
         local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
         location.Create(self)
     end

@@ -1,8 +1,5 @@
 local Lighting = game:GetService("Lighting")
-local LocalizationService = game:GetService("LocalizationService")
 local Stage = {}
-
-
 
 -- dont forget uncomment 38 line about spawn character
 -- надо поиграться с камерой чтобы обзор был похож на 1д игру
@@ -48,6 +45,11 @@ function Stage:Init()
         end
         repeat wait() until self.Level > i
     end
+    print('Finish')
+    repeat wait() until self.IsReady
+    print('IsReady')
+
+    -- self.InteractRemote:Disconnect()
 end
 
 
@@ -65,10 +67,10 @@ function Stage:AddLightToCharacter()
 
     local att= Instance.new('Attachment')
     att.Parent = head
-    att.CFrame *= CFrame.new(0,.7,0)
+    att.CFrame *= CFrame.new(0,1,0)
 
     local light = Instance.new('PointLight')
-    light.Brightness = .1 -- more ligtly maybe
+    light.Brightness = .2 -- more ligtly maybe
     light.Shadows = true
     light.Range = 7 -- 10
     light.Parent = att
@@ -103,7 +105,6 @@ function Stage:CreateRoom(properties)
         local wall = Instance.new('Part')
         wall.Parent = model
         wall.Anchored = true
-        -- wall.Material = Enum.Material.Neon
         wall.Color = WALL_COLOR
         if wallsPositions[i] then 
             wall.Position = Vector3.new(table.unpack(wallsPositions[i]))
@@ -199,11 +200,7 @@ function Stage:CreateContent(room, properties)
         part.Anchored = true
 
         if name == 'target' then
-            if self.Level == 3 then
-                self:CreatePortal(setupTarget(part))
-            else
-                setupTarget(part)
-            end
+            setupTarget(part)
         elseif name == 'spawn' then
             setupSpawnPoint(part)
         elseif name == 'wall' then
@@ -224,7 +221,13 @@ function Stage:CreateContent(room, properties)
         if i == spawnIndex then
             part = createPart('spawn')
         elseif i == targetIndex then
-            part = createPart('target')
+            if self.Level == 3 then
+                local portal = self:CreatePortal(properties)
+                portal.Parent = room
+                part = portal
+            else
+                part = createPart('target')
+            end
         elseif i == monsterIndex and self.Level == 3 then
             local monster = self:CreateMonster(properties)
             monster.Parent = room
@@ -236,8 +239,19 @@ function Stage:CreateContent(room, properties)
     end
 end
 
-function Stage:CreatePortal(part)
-    part.Color = Color3.new(0,1,0)
+function Stage:CreatePortal(properties)
+    local portal = Instance.new('Part')
+    portal.Color = Color3.new(0,1,0)
+    portal.Size = Vector3.new(5, properties.wallHeight, 5)
+    portal.Touched:Connect(function(hitPart)
+        if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
+            self.Level += 1
+            -- target:Destroy()
+            -- room:Destroy()
+            self.IsReady = true
+    end)
+
+    return
 end
 
 return Stage

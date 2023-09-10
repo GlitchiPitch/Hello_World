@@ -21,11 +21,7 @@ function Location.Create(game_)
     local self = setmetatable({}, Location)
 
     self.Game = game_
-    -- self.GameEvents = events
 
-    -- self.Player = player
-    -- self.PlayerManager = playerManager
-    
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
     self.Stages = script.Parent.Stages:FindFirstChild(Location.Name) --:GetChildren()
 

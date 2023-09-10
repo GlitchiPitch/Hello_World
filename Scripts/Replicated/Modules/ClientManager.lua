@@ -20,7 +20,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     local AngleY,TargetAngleY = 0,0
     local Sensitivity = 0.6
     local Smoothness = 0.05
-    local HeadOffset = CFrame.new(0,5,0)
+    local HeadOffset = CFrame.new(0,1,0)
 
     local Camera = workspace.CurrentCamera
     Camera.CameraType = Enum.CameraType.Scriptable
