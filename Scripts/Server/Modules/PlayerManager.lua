@@ -18,13 +18,14 @@ function PlayerManager.SetupCharacter(player, propertyList)
     local humanoid = character:FindFirstChild("Humanoid")
 	if propertyList.Character then
         print('setup')
-        print(propertyList)
+        -- print(propertyList)
 		humanoid.WalkSpeed = propertyList.WalkSpeed
 	end
     
     if propertyList.Camera then
         local head = character:FindFirstChild('Head')
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        print(head, humanoidRootPart)
         PlayerManager.SetupCamera(player, {Humanoid = humanoid, HumanoidRootPart = humanoidRootPart, Head = head}, propertyList)
     end
 end

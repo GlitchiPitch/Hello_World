@@ -42,11 +42,9 @@ function Stage:Init()
         end
         repeat wait() until self.Level > i
     end
-    print('Finish')
+
     repeat wait() until self.IsReady
     print('IsReady')
-
-    -- self.InteractRemote:Disconnect()
 end
 
 
@@ -118,7 +116,7 @@ function Stage:CreateRoom(properties)
 end
 
 function Stage:CreateMonster(properties)
-    -- print('CREATE MONSTER')
+    print('CREATE MONSTER')
     local monster = Instance.new('Part')
     monster.Color = MONSTER_COLOR
     monster.Size = Vector3.new(5, properties.wallHeight, 5)
@@ -164,7 +162,7 @@ function Stage:CreateContent(room, properties)
         end
     end
 
-    print(nodes)
+    -- print(nodes)
     local function setupTarget(target)
 
         target.Material = Enum.Material.Neon
@@ -219,7 +217,7 @@ function Stage:CreateContent(room, properties)
             part = createPart('spawn')
         elseif i == targetIndex then
             if self.Level == 3 then
-                local portal = self:CreatePortal(properties)
+                local portal = self:CreatePortal(properties, room)
                 portal.Parent = room
                 part = portal
             else
@@ -236,15 +234,16 @@ function Stage:CreateContent(room, properties)
     end
 end
 
-function Stage:CreatePortal(properties)
+function Stage:CreatePortal(properties, room)
+    print('Portal is created')
     local portal = Instance.new('Part')
     portal.Color = Color3.new(0,1,0)
     portal.Size = Vector3.new(5, properties.wallHeight, 5)
     portal.Touched:Connect(function(hitPart)
         if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
             self.Level += 1
-            -- target:Destroy()
-            -- room:Destroy()
+            portal:Destroy()
+            room:Destroy()
             self.IsReady = true
     end)
 
