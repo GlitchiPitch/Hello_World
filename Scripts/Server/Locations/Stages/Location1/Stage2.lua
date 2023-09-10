@@ -3,14 +3,11 @@ local Stage = {}
 
 -- dont forget uncomment 38 line about spawn character
 -- надо поиграться с камерой чтобы обзор был похож на 1д игру
- 
+
 local CLOCK_TIME = 0
 local AMBIENT = Color3.fromRGB(10,10,10)
--- local WALL_HEIGHT = 20
--- local BARRIER_SIZE = 10
 local WALL_COLOR = Color3.new(1,1,1)
 local TRIGGER_COLOR = Color3.new(1,1,1)
--- local ROOM_VOLUME = 100
 
 local MONSTER_COLOR = Color3.new(0.8, 0.5, 0.9)
 
@@ -38,7 +35,7 @@ function Stage:Init()
     
     self:Setup()
     
-    for i = 1, 3 do -- level count
+    for i = 1, 3 do
         self:SpawnRoom()
         if self.Game.Player.Character.HumanoidRootPart and self.PlayerSpawnPoint then
             self.Game.Player.Character.HumanoidRootPart.CFrame = self.PlayerSpawnPoint.CFrame
@@ -76,7 +73,7 @@ function Stage:AddLightToCharacter()
     light.Parent = att
 end
 
-function Stage:SpawnRoom() -- called 3 times
+function Stage:SpawnRoom()
     -- возможно переписать без удаления и создания новой комнаты, просто обращаться к меодельке конмнаты и именять позицию и размеры, можно еще это сделать с твином, 
     -- но контент надо удалять или тоже просто пермещать, посмотрим
     local properties = {
@@ -121,7 +118,7 @@ function Stage:CreateRoom(properties)
 end
 
 function Stage:CreateMonster(properties)
-    print('CREATE MONSTER')
+    -- print('CREATE MONSTER')
     local monster = Instance.new('Part')
     monster.Color = MONSTER_COLOR
     monster.Size = Vector3.new(5, properties.wallHeight, 5)
@@ -148,7 +145,7 @@ function Stage:CreateContent(room, properties)
             {x, 0},
             {-x, 0}}
         ) do
-            table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))      
+            table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))
         end
         z += 1
         x += 1
@@ -162,7 +159,7 @@ function Stage:CreateContent(room, properties)
                 {x, -z},
                 {-x, -z},
             }) do
-                table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))      
+                table.insert(nodes, room:GetPivot().Position + Vector3.new(i[1] * wallSize, 0, i[2] * wallSize))
             end
         end
     end
@@ -251,7 +248,7 @@ function Stage:CreatePortal(properties)
             self.IsReady = true
     end)
 
-    return
+    return portal
 end
 
 return Stage

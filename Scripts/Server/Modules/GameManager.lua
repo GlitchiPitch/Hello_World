@@ -5,7 +5,6 @@ local EventsList = require(ReplicatedStorage.Description).EventsList
 local GameManager = {}
 
 function GameManager.CreateStartMenu()
-	-- local playerGui = player.PlayerGui
 	local screenGui = Instance.new("ScreenGui")
 	screenGui.Parent = game:GetService("ReplicatedFirst")
 	screenGui.Name = "MainGui"
@@ -32,9 +31,6 @@ end
 
 function GameManager.CreateEvents()
     local Remotes = ReplicatedStorage.Remotes
-    -- local Remotes = Instance.new('Folder')
-	-- Remotes.Parent = ReplicatedStorage
-	-- Remotes.Name = 'Remotes'
 
 	local function createEvent(name)
 		local s = Instance.new('RemoteEvent')
@@ -43,7 +39,6 @@ function GameManager.CreateEvents()
 	end
 
 	for _, event in pairs(EventsList.Remotes) do
-		-- print(event)
 		createEvent(event)	
 	end
 end

@@ -29,9 +29,8 @@ function Stage.Create(game_, map, resourses)
 end
 
 function Stage:Init()
-    -- print('Stage 1 init')
+    print('Stage 1 init')
     self:SubsRemote()
-    
     self:Pets()
     repeat wait() until self.IsReady
     self.InteractRemote:Disconnect()
@@ -86,7 +85,6 @@ function Stage:Pets()
         pet.Parent = self.PetsFolder
         pet.Position = Vector3.new(rand(0.6, .6 * 5), 50.5, rand(0, 12))
         setup(pet)
-        -- wait(5)
     end     
 end
 
