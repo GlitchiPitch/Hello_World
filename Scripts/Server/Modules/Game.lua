@@ -33,18 +33,19 @@ end
 
 function Game:Preload()
     GameManager.CreateEvents()
-    GameManager.CreateStartMenu()
+    GameManager.CreateStartMenu(self.Player)
 
     self.PlayerManager = require(ServerScriptService.Modules.PlayerManager)
     self.Events = require(ReplicatedStorage.Modules.Events)
 end
 
 function Game:StartGame()
-    -- for i = 2, #Locations:GetChildren() do
-        -- print('start Location')
-    local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
-    location.Create(self)
-    -- end
+    for i = 2, #Locations:GetChildren() do
+        print('start Location')
+        local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
+        location.Create(self)
+        self.LocationIndex += 1
+    end
 end
 
 return Game

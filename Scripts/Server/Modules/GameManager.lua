@@ -4,9 +4,9 @@ local EventsList = require(ReplicatedStorage.Description).EventsList
 
 local GameManager = {}
 
-function GameManager.CreateStartMenu()
+function GameManager.CreateStartMenu(player)
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Parent = game:GetService("ReplicatedFirst")
+	screenGui.Parent = player.PlayerGui --game:GetService("ReplicatedFirst")
 	screenGui.Name = "MainGui"
 	screenGui.IgnoreGuiInset = true
 

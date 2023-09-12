@@ -8,9 +8,6 @@ local Events = require(ReplicatedModules.Events)
 Players.CharacterAutoLoads = false
 StarterPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 
--- надо сделать моедльку игрока невидимой и поправить offset в установке камеры
--- добавить стартер чарактер просто нуба и сделать все его детали неввидимыми
-
 local PlayerManager = {}
 
 function PlayerManager.SetupCharacter(player, propertyList)
@@ -25,7 +22,6 @@ function PlayerManager.SetupCharacter(player, propertyList)
     if propertyList.Camera then
         local head = character:FindFirstChild('Head')
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        print(head, humanoidRootPart)
         PlayerManager.SetupCamera(player, {Humanoid = humanoid, HumanoidRootPart = humanoidRootPart, Head = head}, propertyList)
     end
 end

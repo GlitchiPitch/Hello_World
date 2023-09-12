@@ -8,12 +8,17 @@ local Events = require(Modules.Events)
 
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
-local MainGui = ReplicatedFirst:WaitForChild('MainGui')
+-- local MainGui = ReplicatedFirst:WaitForChild('MainGui')
 
 local ClientManager = {}
 
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
 
+    local canRunning = true
+    
+    if propertyList.Character.CanRunning then
+        canRunning = propertyList.Character.CanRunning
+    end
     local AngleX,TargetAngleX = 0,0
     local AngleY,TargetAngleY = 0,0
     local Sensitivity = 0.6
@@ -77,7 +82,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             if inputObject.KeyCode == Enum.KeyCode.A then a = true end
             if inputObject.KeyCode == Enum.KeyCode.S then s = true end
             if inputObject.KeyCode == Enum.KeyCode.D then d = true end
-            if inputObject.KeyCode == Enum.KeyCode.LeftShift then lshift = true end
+            if inputObject.KeyCode == Enum.KeyCode.LeftShift and canRunning then lshift = true end
         end
     end)
     
@@ -88,7 +93,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             if inputObject.KeyCode == Enum.KeyCode.A then a = false	end
             if inputObject.KeyCode == Enum.KeyCode.S then s = false	end
             if inputObject.KeyCode == Enum.KeyCode.D then d = false	end
-            if inputObject.KeyCode == Enum.KeyCode.LeftShift then lshift = false end
+            if inputObject.KeyCode == Enum.KeyCode.LeftShift and canRunning then lshift = false end
         end
     end)
 
@@ -182,7 +187,8 @@ function ClientManager.SetupMouseBehaviour(player)
 end
 
 function ClientManager.SetupStartMenu(player)
-    MainGui.Parent = player.PlayerGui
+    local MainGui = player.PlayerGui:FindFirstChild('MainGui')
+    -- MainGui.Parent = player.PlayerGui
     MainGui.Background.StartButton.MouseButton1Click:Connect(function()
         Events.Remotes.StartGame:FireServer()
         MainGui.Background:Destroy()

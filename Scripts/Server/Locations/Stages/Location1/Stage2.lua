@@ -2,9 +2,10 @@ local Lighting = game:GetService("Lighting")
 local Stage = {}
 
 -- dont forget uncomment 38 line about spawn character
+-- 119 line
 -- надо поиграться с камерой чтобы обзор был похож на 1д игру
 
-local CLOCK_TIME = 0
+local CLOCK_TIME = 16
 local AMBIENT = Color3.fromRGB(10,10,10)
 local WALL_COLOR = Color3.new(1,1,1)
 local TRIGGER_COLOR = Color3.new(1,1,1)
@@ -44,7 +45,8 @@ function Stage:Init()
     end
 
     repeat wait() until self.IsReady
-    print('IsReady')
+    print('Stage 2 is ready')
+    -- self.Game.Player:LoadCharacter()
 end
 
 
@@ -57,8 +59,8 @@ function Stage:Setup()
 end
 
 function Stage:AddLightToCharacter()
-    local c = self.Game.Player.CharacterAdded:Wait()
-    local head = c:WaitForChild('Head')
+    local c = self.Game.Player.Character --or self.Game.Player.CharacterAdded:Wait()
+    local head = c:FindFirstChild('Head') --or c:WaitForChild('Head')
 
     local att= Instance.new('Attachment')
     att.Parent = head
@@ -72,6 +74,7 @@ function Stage:AddLightToCharacter()
 end
 
 function Stage:SpawnRoom()
+    print('Room is created')
     -- возможно переписать без удаления и создания новой комнаты, просто обращаться к меодельке конмнаты и именять позицию и размеры, можно еще это сделать с твином, 
     -- но контент надо удалять или тоже просто пермещать, посмотрим
     local properties = {
@@ -120,6 +123,7 @@ function Stage:CreateMonster(properties)
     local monster = Instance.new('Part')
     monster.Color = MONSTER_COLOR
     monster.Size = Vector3.new(5, properties.wallHeight, 5)
+    monster.Material = Enum.Material.Neon
 
     return monster
 end
@@ -177,16 +181,19 @@ function Stage:CreateContent(room, properties)
     end
 
     local function setupSpawnPoint(spawn_)
+        print('Spawn is created')
         spawn_.CanCollide, spawn_.CanQuery, spawn_.CanTouch = false, false, false
         spawn_.Transparency = 1
         spawn_.CFrame *= CFrame.Angles(math.rad(math.random(0, 2)), 0, math.rad(math.random(0, 2)))
         self.PlayerSpawnPoint = spawn_
     end
 
-    local function setupWalls(wall)
-        wall.Color = WALL_COLOR
+    local function setupBarrier(barrier)
+        barrier.Color = WALL_COLOR
         local size = {{wallSize - 2, properties.wallHeight, 1}, {1, properties.wallHeight, wallSize - 2}}
-        wall.Size = Vector3.new(table.unpack(size[math.random(#size)]))
+        barrier.Size = Vector3.new(table.unpack(size[math.random(#size)]))
+        barrier.CanCollide = false
+        barrier.Transparency = 1
     end
     local function createPart(name)
         local part = Instance.new('Part')
@@ -198,8 +205,8 @@ function Stage:CreateContent(room, properties)
             setupTarget(part)
         elseif name == 'spawn' then
             setupSpawnPoint(part)
-        elseif name == 'wall' then
-            setupWalls(part)
+        elseif name == 'barrier' then
+            setupBarrier(part)
         end
 
         return part
@@ -228,7 +235,7 @@ function Stage:CreateContent(room, properties)
             monster.Parent = room
             part = monster
         else
-            part = createPart('wall')
+            part = createPart('barrier')
         end
         part.Position = pos
     end
@@ -238,6 +245,7 @@ function Stage:CreatePortal(properties, room)
     print('Portal is created')
     local portal = Instance.new('Part')
     portal.Color = Color3.new(0,1,0)
+    portal.Material = Enum.Material.Neon
     portal.Size = Vector3.new(5, properties.wallHeight, 5)
     portal.Touched:Connect(function(hitPart)
         if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
