@@ -16,7 +16,7 @@ function Game.newGame(player)
     local self = setmetatable({}, Game)
 
     self.Player = player
-    self.LocationIndex = 1
+    self.LocationIndex = 2
 
     self:Init()
 
@@ -40,12 +40,12 @@ function Game:Preload()
 end
 
 function Game:StartGame()
-    for i = 2, #Locations:GetChildren() do
-        print('start Location')
-        local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
-        location.Create(self)
-        self.LocationIndex += 1
-    end
+    -- for i = 2, #Locations:GetChildren() do
+    --     print('start Location')
+    local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
+    location.Create(self)
+        -- self.LocationIndex += 1
+    -- end
 end
 
 return Game

@@ -5,6 +5,8 @@ local Stage = {}
 -- 119 line
 -- надо поиграться с камерой чтобы обзор был похож на 1д игру
 
+-- установить моснтра, если к нему прикоснуться то запуститься предупреждение и пропускается этап 1.3, план б это просто сделать как скример без предположения о последсвтиях
+
 local CLOCK_TIME = 16
 local AMBIENT = Color3.fromRGB(10,10,10)
 local WALL_COLOR = Color3.new(1,1,1)
@@ -47,6 +49,8 @@ function Stage:Init()
     repeat wait() until self.IsReady
     print('Stage 2 is ready')
     -- self.Game.Player:LoadCharacter()
+    self.PlayerLight:Destroy()
+    -- телепортируем игрока в нужное место на карте
 end
 
 
@@ -71,6 +75,8 @@ function Stage:AddLightToCharacter()
     light.Shadows = true
     light.Range = 7 -- 10
     light.Parent = att
+
+    self.PlayerLight = att
 end
 
 function Stage:SpawnRoom()

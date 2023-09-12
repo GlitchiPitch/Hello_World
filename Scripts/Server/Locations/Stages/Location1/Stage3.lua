@@ -73,6 +73,10 @@ function Stage:ShowPoliceWarning()
     local warning = Warnings.Create(self.Game.Player)
     warning:Warning_1_1()
     
+    -- waiting into warning Warning_1_1
+
+    self.Game.Player.Character.HumanoidRootPart.Anchored = false
+
 end
 
 
