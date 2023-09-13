@@ -69,21 +69,31 @@ function Stage:CreateRoom(properties)
             return wall
         end
 
-    local function createCorridor(sidePosition, wallSize)
-        local a = 50
-        local i = 1
-        -- for i = 1, 2 do
-        local x = sidePosition.X > 0 and (i % 2 == 0 and sidePosition.X + a or sidePosition.X - a ) or 0
-        local z = sidePosition.Z > 0 and (i % 2 == 0 and sidePosition.Z + a or sidePosition.Z - a ) or 0
-        local y = sidePosition.Y
-        local size = Vector3.new(10,10,10)
+    local function createCorridor(sidePosition, holeSize)
+        local corridorLength = 15
 
-        local pos = sidePosition + Vector3.new(x, y, z)
+        local x = sidePosition.X > 0 and sidePosition.X + corridorLength or sidePosition.X < 0 and sidePosition.X - corridorLength 
+        local z = sidePosition.Z > 0 and sidePosition.Z + corridorLength or sidePosition.Z < 0 and sidePosition.Z - corridorLength
+        local y = sidePosition.Y / 2
+        
+        local centralPos = sidePosition + Vector3.new(x, y, z)
+        
+        for i = 1, 2 do
+            local z1 = (sidePosition.X > 0 or sidePosition.X < 0) and (i % 2 == 0 and holeSize.Z / 2 or -holeSize.Z / 2) or 0
+            local x1 = (sidePosition.Z > 0 or sidePosition.Z < 0) and (i % 2 == 0 and holeSize.X / 2 or -holeSize.X / 2) or 0
+            local pos = centralPos + Vector3.new(x1, y, z1)
+            
+            local z1s = (sidePosition.Z > 0 or sidePosition.Z < 0) and (i % 2 == 0 and corridorLength or -corridorLength) or 1
+            local x1s = (sidePosition.X > 0 or sidePosition.X < 0) and (i % 2 == 0 and corridorLength or -corridorLength) or 1
 
-        local wall = createWall(pos, size) -- side
-        wall.Color = Color3.new(1,0,0)
-        wall.Name = 'cor'
-        wall.Parent = workspace
+            
+            local size = Vector3.new(x1s, holeSize.Y, z1s)
+
+            local wall = createWall(pos, size) -- side
+            wall.Color = Color3.new(1,0,0)
+            wall.Name = 'cor'
+            wall.Parent = workspace
+        end
             -- createWall() -- roof or bottom
         -- end
 
@@ -102,7 +112,7 @@ function Stage:CreateRoom(properties)
 
             createCorridor(sidePosition, wallSize)
 
-            for i = 1, 4 do
+            for i = 1, 2 do
                 local x = sideSize.X > 1 and (i % 2 == 0 and wallSize.X or -wallSize.X) or 0
                 local z = sideSize.Z > 1 and (i % 2 == 0 and wallSize.Z or -wallSize.Z) or 0
                 local pos = sidePosition + Vector3.new(x, 0, z)
