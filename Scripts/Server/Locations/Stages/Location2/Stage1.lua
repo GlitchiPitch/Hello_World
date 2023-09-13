@@ -1,3 +1,6 @@
+
+local WALL_COLOR = Color3.new(1,1,1)
+
 local Stage = {}
 
 Stage.__index = Stage
@@ -33,8 +36,8 @@ function Stage:SpawnRoom()
     -- возможно переписать без удаления и создания новой комнаты, просто обращаться к меодельке конмнаты и именять позицию и размеры, можно еще это сделать с твином, 
     -- но контент надо удалять или тоже просто пермещать, посмотрим
     local properties = {
-        wallsPositionValue = 50 + (50 * .3),
-        wallHeight = 15 + (15 * .3)
+        wallsPositionValue = 50,
+        wallHeight = 40
     }
 
     local room = self:CreateRoom(properties)
@@ -55,22 +58,40 @@ function Stage:CreateRoom(properties)
             }
     local model = Instance.new('Model')
     model.Parent = workspace
+
+    local function createPartOfWall(position, size)
+            local wall = Instance.new('Part')
+            wall.Parent = model
+            wall.Anchored = true
+            wall.Position = position
+            wall.Size = size
+        end
     -- model:PivotTo(Location.CFrame)  здесь взять центр локации в трех векторах и спавнить по середине эту комнату.
+    -- возможно как-то можно еще укоротить генер стен обьеденив с 73 по 75 с 78 по 79
     for i = 1, 6 do
-        local wall = Instance.new('Part')
-        wall.Parent = model
-        wall.Anchored = true
-        wall.Color = Color3.new(1,1,1)
         if wallsPositions[i] then 
-            wall.Position = Vector3.new(table.unpack(wallsPositions[i]))
-            local x, y, z = wall.Position.X == 0 and math.abs(wall.Position.Z) * 2 or 1, wallHeight, wall.Position.Z == 0 and math.abs(wall.Position.X) * 2 or 1
-            wall.Size = Vector3.new(x, y, z)
+            local wPos = Vector3.new(table.unpack(wallsPositions[i]))
+            local x, y, z = wPos.X == 0 and math.abs(wPos.Z) * 2 or 1, wallHeight, wPos.Z == 0 and math.abs(wPos.X) * 2 or 1
+            local wSize = Vector3.new(x, y, z)
+
+            for i = 1, 4 do
+                local size = Vector3.new(wSize.X > 1 and wSize.X / 3 or 1, wSize.Y, wSize.Z > 1 and wSize.Z / 3 or 1)
+                local x = wSize.X > 1 and (i % 2 == 0 and size.X or -size.X) or 0
+                local z = wSize.Z > 1 and (i % 2 == 0 and size.Z or -size.Z) or 0
+                local pos = wPos + Vector3.new(x, 0, z)
+                createPartOfWall(pos, size) 
+            end
+
         else
             local _, modelSize = model:GetBoundingBox()
-            wall.Position = model:GetPivot().Position + ( i % 2 == 0 and Vector3.new(0, modelSize.Y / 2, 0) or Vector3.new(0, -modelSize.Y / 2, 0) )
-            wall.Size = Vector3.new(modelSize.X, 1, modelSize.Z)
+            local pos = model:GetPivot().Position + ( i % 2 == 0 and Vector3.new(0, modelSize.Y / 2, 0) or Vector3.new(0, -modelSize.Y / 2, 0) )
+            local size = Vector3.new(modelSize.X, 1, modelSize.Z)
+            createPartOfWall(pos, size)
         end
     end
+
+    -- делаем коридоры, градиент на стены от белого к черному и телепорты в конце
+
 
     return model
 end
