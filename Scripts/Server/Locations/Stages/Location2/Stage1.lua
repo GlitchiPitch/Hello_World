@@ -59,34 +59,61 @@ function Stage:CreateRoom(properties)
     local model = Instance.new('Model')
     model.Parent = workspace
 
-    local function createPartOfWall(position, size)
+    local function createWall(position, size)
             local wall = Instance.new('Part')
             wall.Parent = model
             wall.Anchored = true
             wall.Position = position
             wall.Size = size
+
+            return wall
         end
+
+    local function createCorridor(sidePosition, wallSize)
+        local a = 50
+        local i = 1
+        -- for i = 1, 2 do
+        local x = sidePosition.X > 0 and (i % 2 == 0 and sidePosition.X + a or sidePosition.X - a ) or 0
+        local z = sidePosition.Z > 0 and (i % 2 == 0 and sidePosition.Z + a or sidePosition.Z - a ) or 0
+        local y = sidePosition.Y
+        local size = Vector3.new(10,10,10)
+
+        local pos = sidePosition + Vector3.new(x, y, z)
+
+        local wall = createWall(pos, size) -- side
+        wall.Color = Color3.new(1,0,0)
+        wall.Name = 'cor'
+        wall.Parent = workspace
+            -- createWall() -- roof or bottom
+        -- end
+
+        -- createWall() -- teleport wall
+    end
     -- model:PivotTo(Location.CFrame)  здесь взять центр локации в трех векторах и спавнить по середине эту комнату.
     -- возможно как-то можно еще укоротить генер стен обьеденив с 73 по 75 с 78 по 79
     for i = 1, 6 do
         if wallsPositions[i] then 
-            local wPos = Vector3.new(table.unpack(wallsPositions[i]))
-            local x, y, z = wPos.X == 0 and math.abs(wPos.Z) * 2 or 1, wallHeight, wPos.Z == 0 and math.abs(wPos.X) * 2 or 1
-            local wSize = Vector3.new(x, y, z)
+            local sidePosition = Vector3.new(table.unpack(wallsPositions[i]))
+
+            local x, y, z = sidePosition.X == 0 and math.abs(sidePosition.Z) * 2 or 1, wallHeight, sidePosition.Z == 0 and math.abs(sidePosition.X) * 2 or 1
+            local sideSize = Vector3.new(x, y, z)
+
+            local wallSize = Vector3.new(sideSize.X > 1 and sideSize.X / 3 or 1, sideSize.Y, sideSize.Z > 1 and sideSize.Z / 3 or 1)
+
+            createCorridor(sidePosition, wallSize)
 
             for i = 1, 4 do
-                local size = Vector3.new(wSize.X > 1 and wSize.X / 3 or 1, wSize.Y, wSize.Z > 1 and wSize.Z / 3 or 1)
-                local x = wSize.X > 1 and (i % 2 == 0 and size.X or -size.X) or 0
-                local z = wSize.Z > 1 and (i % 2 == 0 and size.Z or -size.Z) or 0
-                local pos = wPos + Vector3.new(x, 0, z)
-                createPartOfWall(pos, size) 
+                local x = sideSize.X > 1 and (i % 2 == 0 and wallSize.X or -wallSize.X) or 0
+                local z = sideSize.Z > 1 and (i % 2 == 0 and wallSize.Z or -wallSize.Z) or 0
+                local pos = sidePosition + Vector3.new(x, 0, z)
+                createWall(pos, wallSize) 
             end
 
         else
             local _, modelSize = model:GetBoundingBox()
             local pos = model:GetPivot().Position + ( i % 2 == 0 and Vector3.new(0, modelSize.Y / 2, 0) or Vector3.new(0, -modelSize.Y / 2, 0) )
             local size = Vector3.new(modelSize.X, 1, modelSize.Z)
-            createPartOfWall(pos, size)
+            createWall(pos, size)
         end
     end
 
@@ -126,3 +153,25 @@ function Stage:CreateContent(room)
 end
 
 return Stage
+
+
+--[[
+
+если развить то можно получить неплохой вариант генерации множества комнат
+
+local a = 50
+        for i = 1, 2 do
+            local x = sidePosition.X > 0 and (i % 2 == 0 and sidePosition.X + a or sidePosition.X - a ) or 0
+            local z = sidePosition.Z > 0 and (i % 2 == 0 and sidePosition.Z + a or sidePosition.Z - a ) or 0
+            local y = sidePosition.Y
+            local size = Vector3.new(10,10,10)
+
+            local pos = sidePosition + Vector3.new(x, y, z)
+
+            local wall = createWall(pos, size) -- side
+            wall.Color = Color3.new(1,0,0)
+            wall.Name = 'cor'
+            -- createWall() -- roof or bottom
+        end
+
+]]
