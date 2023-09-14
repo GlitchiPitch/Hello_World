@@ -1,6 +1,9 @@
 
 local WALL_COLOR = Color3.new(1,1,1)
 
+-- find solution for a spawning the end of corridors
+
+
 local Stage = {}
 
 Stage.__index = Stage
@@ -69,35 +72,80 @@ function Stage:CreateRoom(properties)
             return wall
         end
 
-    local function createCorridor(sidePosition, holeSize)
-        local corridorLength = 15
+    local function setupIllusionSurface(illusionWall)
 
-        local x = sidePosition.X > 0 and sidePosition.X + corridorLength or sidePosition.X < 0 and sidePosition.X - corridorLength 
-        local z = sidePosition.Z > 0 and sidePosition.Z + corridorLength or sidePosition.Z < 0 and sidePosition.Z - corridorLength
+        illusionWall.Parent = workspace
+        illusionWall.CanCollide = false
+        illusionWall.Transparency = 1
+
+        local surface = Instance.new('SurfaceGui')
+        surface.Parent = illusionWall
+        local solid = Instance.new('Frame')
+        solid.Parent = surface
+        solid.BackgroundColor3 = Color3.new(0,0,0)
+        solid.Size = UDim2.fromScale(1, 1)
+        surface.Face = illusionWall.Size.X > 1 and (illusionWall.Position.Z > 0 and Enum.NormalId.Back or Enum.NormalId.Front) 
+                        or illusionWall.Size.Z > 1 and (illusionWall.Position.X > 0 and Enum.NormalId.Right or Enum.NormalId.Left)
+    end
+    
+    local function createWallGradient(wall)
+        local surface = Instance.new('SurfaceGui')
+        surface.Parent = wall
+        local frame = Instance.new('Frame')
+        frame.Parent = surface
+        frame.Size = UDim2.fromScale(1, 1)
+        local gradient = Instance.new('UIGradient')
+        gradient.Parent = frame
+        
+        gradient.Color = ColorSequence.new(wall.Color, Color3.new(0,0,0))
+        
+    end
+    
+        local function setupCorridorPart(wall)
+            wall.Color = Color3.new(1,0,0)
+            wall.Parent = workspace
+            createWallGradient(wall)
+        end
+    
+
+    local function createCorridor(sidePosition, holeSize)
+        local corridorLength = 50
+
+        local x = sidePosition.X > 0 and sidePosition.X + corridorLength / 2 or sidePosition.X < 0 and sidePosition.X - corridorLength / 2
+        local z = sidePosition.Z > 0 and sidePosition.Z + corridorLength / 2 or sidePosition.Z < 0 and sidePosition.Z - corridorLength / 2
         local y = sidePosition.Y / 2
         
-        local centralPos = sidePosition + Vector3.new(x, y, z)
+        local centralPos = Vector3.new(x, y, z)
+
+        setupIllusionSurface(createWall(sidePosition, holeSize))
         
+
         for i = 1, 2 do
-            local z1 = (sidePosition.X > 0 or sidePosition.X < 0) and (i % 2 == 0 and holeSize.Z / 2 or -holeSize.Z / 2) or 0
             local x1 = (sidePosition.Z > 0 or sidePosition.Z < 0) and (i % 2 == 0 and holeSize.X / 2 or -holeSize.X / 2) or 0
+            local z1 = (sidePosition.X > 0 or sidePosition.X < 0) and (i % 2 == 0 and holeSize.Z / 2 or -holeSize.Z / 2) or 0
             local pos = centralPos + Vector3.new(x1, y, z1)
             
-            local z1s = (sidePosition.Z > 0 or sidePosition.Z < 0) and (i % 2 == 0 and corridorLength or -corridorLength) or 1
-            local x1s = (sidePosition.X > 0 or sidePosition.X < 0) and (i % 2 == 0 and corridorLength or -corridorLength) or 1
-
+            local z1s = (sidePosition.Z > 0 or sidePosition.Z < 0) and corridorLength or 1
+            local x1s = (sidePosition.X > 0 or sidePosition.X < 0) and corridorLength or 1
             
             local size = Vector3.new(x1s, holeSize.Y, z1s)
 
-            local wall = createWall(pos, size) -- side
-            wall.Color = Color3.new(1,0,0)
-            wall.Name = 'cor'
-            wall.Parent = workspace
-        end
-            -- createWall() -- roof or bottom
-        -- end
+            setupCorridorPart(createWall(pos, size)) -- side
+            
 
-        -- createWall() -- teleport wall
+            local y1 = i % 2 == 0 and sidePosition.Y + holeSize.Y / 2 or sidePosition.Y - holeSize.Y / 2
+            local pos = Vector3.new(centralPos.X, y1, centralPos.Z)
+            local z2s = (sidePosition.Z > 0 or sidePosition.Z < 0) and corridorLength or holeSize.Z
+            local x2s = (sidePosition.X > 0 or sidePosition.X < 0) and corridorLength or holeSize.X
+            local size = Vector3.new(x2s, 1, z2s)
+            setupCorridorPart(createWall(pos, size)) -- roof or bottom
+            
+        end
+        local w3 = createWall(centralPos * 1.2, holeSize) -- teleport wall ( its not good because .38 )
+        w3.Parent = workspace
+        w3.Color = Color3.new(0,1,0)
+        
+
     end
     -- model:PivotTo(Location.CFrame)  здесь взять центр локации в трех векторах и спавнить по середине эту комнату.
     -- возможно как-то можно еще укоротить генер стен обьеденив с 73 по 75 с 78 по 79
@@ -129,14 +177,13 @@ function Stage:CreateRoom(properties)
 
     -- делаем коридоры, градиент на стены от белого к черному и телепорты в конце
 
-
     return model
 end
 
 function Stage:CreateContent(room)
     -- teleports into rooms walls are spawning here
     -- we need to get walls potision and spawn teleports there
-    -- wrong teleports send the player to the spawn point
+    -- wrong teleports stops music
 
     local function setupSpawnPoint()
         print('Spawn is created')
@@ -148,15 +195,6 @@ function Stage:CreateContent(room)
         spawn_.CFrame = room:GetPivot()
         spawn_.CFrame *= CFrame.Angles(math.rad(math.random(0, 2)), 0, math.rad(math.random(0, 2)))
         self.PlayerSpawnPoint = spawn_
-    end
-
-    local function createTeleports(size, position)
-        local teleport = Instance.new('Part')
-        teleport.Parent = room
-        teleport.Anchored = true
-        teleport.Size = size
-        teleport.Position = position
-        teleport.Color = Color3.new(0,0,0)
     end
 
     setupSpawnPoint()
