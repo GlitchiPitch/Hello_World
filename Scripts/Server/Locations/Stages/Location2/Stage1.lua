@@ -2,17 +2,19 @@ local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 
+-- fix stage behavior about add sounds and colors
+
+
 local SOUND_LEVELS = 4
 local COLOR_LEVELS = SOUND_LEVELS + 4
+local RIGHT_ORDER = {4, 2, 3, 1, 2, 1, 2, 1}
 
 local url = "rbxassetid://"
 local SOUNDS_ID = { url .. 9112854440, url .. 9114625745, url .. 9112775175, url .. 9125351901}
 
 local AMBIENT = Color3.new(.2,.2,.2)
 
-local WALL_COLOR = Color3.new(1, 1, 1)
-
--- find solution for a spawning the end of corridors
+local WALL_COLOR = Color3.new(1, 0, 0)
 
 local Stage = {}
 
@@ -26,7 +28,8 @@ function Stage.Create(game_, map, resourses)
 	self.Resourses = resourses
 	self.IsReady = false
 
-	self.Level = 1
+	self.Level = 0
+    self.Sounds = {}
 
 	self.PlayerSpawnPoint = nil
 	self:Init()
@@ -41,31 +44,58 @@ function Stage:Init()
 	if self.Game.Player.Character.HumanoidRootPart and self.PlayerSpawnPoint then
 		self.Game.Player.Character.HumanoidRootPart.CFrame = self.PlayerSpawnPoint.CFrame
 	end
+
+    repeat wait() until self.IsReady
+
+    print('finish stage')
 end
 
 function Stage:Setup()
     Lighting.FogStart = 20
     Lighting.ClockTime = 21
     Lighting.OutdoorAmbient = AMBIENT
+
+    self:CreateSounds()
+end
+
+function Stage:CreateSounds()
+    for _, soundId in pairs(SOUNDS_ID) do
+        local sound = Instance.new('Sound')
+        sound.Volume = .1
+        sound.SoundId = soundId
+        sound.Parent = SoundService
+        table.insert(self.Sounds, sound)
+    end
 end
 
 function Stage:ChangeLevel()
-    -- print('Change level')
-    if self.Level <= SOUND_LEVELS then
-        local sound = Instance.new('Sound')
-        sound.Volume = .1
-        sound.SoundId = SOUNDS_ID[self.Level]
-        sound.Parent = SoundService
-        sound:Play()
+    print('Change level')
+    print(self.Level)
+    if self.Level ~= 0 and self.Level <= SOUND_LEVELS then
+        print('add sound')
+        for i = 1, self.Level do
+            print(self.Sounds[i])
+            if self.Sounds[i].Played then continue end
+            print('play sound')
+            self.Sounds[i]:Play()   
+        end
+    elseif self.Level >= SOUND_LEVELS and self.Level <= COLOR_LEVELS then
+        print('add color')
+        for _, object in pairs(self.Room:GetDescendants()) do
+            if object:IsA('Part') then object.Color *= .2 end
+        end
     else
-        if self.Level <= COLOR_LEVELS then
-            for _, object in pairs(self.Room:GetDescendants()) do
-                if object:IsA('Part') and object.Transparency == 0 then
-                    object.Color = Color3.new(1,0,1)
-                end
-            end
+        for _, sound in pairs(self.Sounds) do
+            print('stop sound')
+            sound:Stop()
+        end
+        for _, object in pairs(self.Room:GetDescendants()) do
+            print('remove color')
+            if object:IsA('Part') then object.Color = WALL_COLOR end
         end
     end
+
+    if self.Level == 8 then self.IsReady = true end
 end
 
 function Stage:SpawnRoom()
@@ -146,7 +176,7 @@ function Stage:CreateRoom(properties)
 	end
     
     local teleportList = {}
-	local function setupTeleport(teleport)
+	local function setupTeleport(teleport, index)
 		if teleport.Size.X > 1 then
 			teleport:SetAttribute(
 				"TeleportFace",
@@ -160,42 +190,50 @@ function Stage:CreateRoom(properties)
 						or Vector3.new(0, 0, 20)
 					)
 			)
-		elseif teleport.Size.Z > 1 then
-            teleport:SetAttribute(
-				"TeleportFace",
-				teleport.Position.X > 0 and Enum.NormalId.Right.Name or Enum.NormalId.Left.Name
-			)
-			teleport:SetAttribute(
-				"TeleportPos",
-				teleport.Position
+            elseif teleport.Size.Z > 1 then
+                teleport:SetAttribute(
+                    "TeleportFace",
+                    teleport.Position.X > 0 and Enum.NormalId.Right.Name or Enum.NormalId.Left.Name
+                )
+                teleport:SetAttribute(
+                    "TeleportPos",
+                    teleport.Position
 					+ (
-						teleport.Position.X > 0 and Vector3.new(-20, 0, 0)
+                        teleport.Position.X > 0 and Vector3.new(-20, 0, 0)
 						or Vector3.new(20, 0, 0)
 					)
-			)
-		end
+                )
+            end
+        teleport:SetAttribute('Order', index)
         teleport.Name = teleport:GetAttribute('TeleportFace')
         teleportList[teleport.Name] = teleport
-        print(teleportList)
-        local db = false
+        -- print(teleportList)
         teleport.Touched:Connect(function(hitPart)
             -- local humanoidRootPart = hitPart.Parent:FindFirstChild('HumanoidRootPart')
             local player = game.Players:GetPlayerFromCharacter(hitPart.Parent)
-            if not player and db then return end
-            db = true
+            if not player then return end
+            teleport.CanTouch = false
             player.Character:MoveTo(
             (teleport.Name or teleport:GetAttribute('TeleportFace')) == 'Front' and teleportList['Back']:GetAttribute('TeleportPos') or 
             (teleport.Name or teleport:GetAttribute('TeleportFace')) == 'Back' and teleportList['Front']:GetAttribute('TeleportPos') or
             (teleport.Name or teleport:GetAttribute('TeleportFace')) == 'Right' and teleportList['Left']:GetAttribute('TeleportPos') or
             (teleport.Name or teleport:GetAttribute('TeleportFace')) == 'Left' and teleportList['Right']:GetAttribute('TeleportPos')
             )
-            self.Level += 1
+            print(teleport:GetAttribute('Order'))
+            self.Level = RIGHT_ORDER[self.Level + 1] == teleport:GetAttribute('Order') and self.Level + 1 or 0
             self:ChangeLevel()
-            db = false
+            task.wait(1)
+            teleport.CanTouch = true
         end)
-
+        -- local RIGHT_ORDER = {4, 3, 2, 1, 2, 1, 2, 1}
+        for _, obj in pairs(teleportList) do
+            if obj:GetAttribute('Order') == 1 then obj.Color = Color3.new(1,0,0) end
+            if obj:GetAttribute('Order') == 2 then obj.Color = Color3.new(0,1,0) end
+            if obj:GetAttribute('Order') == 3 then obj.Color = Color3.new(0,0,1) end
+            if obj:GetAttribute('Order') == 4 then obj.Color = Color3.new(1,1,1) end
+        end
 	end
-	local function createCorridor(sidePosition, holeSize)
+	local function createCorridor(sidePosition, holeSize, index)
 		local corridorLength = 50
 
 		local x = sidePosition.X > 0 and sidePosition.X + corridorLength / 2
@@ -232,7 +270,7 @@ function Stage:CreateRoom(properties)
 		local w3 = createWall(centralPos * 1.2, holeSize) -- teleport wall ( its not good because .38 )
 		w3.Parent = workspace
 		w3.Color = Color3.new(0, 0, 0)
-        setupTeleport(w3)
+        setupTeleport(w3, index)
 	end
 	-- model:PivotTo(Location.CFrame)  здесь взять центр локации в трех векторах и спавнить по середине эту комнату.
 	-- возможно как-то можно еще укоротить генер стен обьеденив с 73 по 75 с 78 по 79
@@ -249,7 +287,7 @@ function Stage:CreateRoom(properties)
 			local wallSize =
 				Vector3.new(sideSize.X > 1 and sideSize.X / 3 or 1, sideSize.Y, sideSize.Z > 1 and sideSize.Z / 3 or 1)
 
-			createCorridor(sidePosition, wallSize)
+			createCorridor(sidePosition, wallSize, i)
 
 			for i = 1, 2 do
 				local x = sideSize.X > 1 and (i % 2 == 0 and wallSize.X or -wallSize.X) or 0
