@@ -2,7 +2,7 @@ local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 
--- fix stage behavior about add sounds and colors
+-- fix color correction
 
 
 local SOUND_LEVELS = 4
@@ -28,7 +28,7 @@ function Stage.Create(game_, map, resourses)
 	self.Resourses = resourses
 	self.IsReady = false
 
-	self.Level = 0
+	self.Level = 1
     self.Sounds = {}
 
 	self.PlayerSpawnPoint = nil
@@ -55,6 +55,8 @@ function Stage:Setup()
     Lighting.ClockTime = 21
     Lighting.OutdoorAmbient = AMBIENT
 
+	self.RightChoice = false
+
     self:CreateSounds()
 end
 
@@ -70,20 +72,19 @@ end
 
 function Stage:ChangeLevel()
     print('Change level')
-    print(self.Level)
-    if self.Level ~= 0 and self.Level <= SOUND_LEVELS then
-        print('add sound')
+    if self.RightChoice and self.Level <= SOUND_LEVELS then
         for i = 1, self.Level do
-            print(self.Sounds[i])
-            if self.Sounds[i].Played then continue end
-            print('play sound')
+            if self.Sounds[i].Playing then continue end
             self.Sounds[i]:Play()   
         end
-    elseif self.Level >= SOUND_LEVELS and self.Level <= COLOR_LEVELS then
-        print('add color')
+		self.Level += 1
+    elseif self.RightChoice and self.Level >= SOUND_LEVELS and self.Level <= COLOR_LEVELS then
         for _, object in pairs(self.Room:GetDescendants()) do
-            if object:IsA('Part') then object.Color *= .2 end
+            if object:IsA('Part') then 
+				object.Color = Color3.new(object.Color.R + (object.Color.R * .2), object.Color.G + (object.Color.G * .2), object.Color.B + (object.Color.B * .2))
+			end
         end
+		self.Level += 1
     else
         for _, sound in pairs(self.Sounds) do
             print('stop sound')
@@ -93,6 +94,7 @@ function Stage:ChangeLevel()
             print('remove color')
             if object:IsA('Part') then object.Color = WALL_COLOR end
         end
+		self.Level = 1
     end
 
     if self.Level == 8 then self.IsReady = true end
@@ -220,7 +222,8 @@ function Stage:CreateRoom(properties)
             (teleport.Name or teleport:GetAttribute('TeleportFace')) == 'Left' and teleportList['Right']:GetAttribute('TeleportPos')
             )
             print(teleport:GetAttribute('Order'))
-            self.Level = RIGHT_ORDER[self.Level + 1] == teleport:GetAttribute('Order') and self.Level + 1 or 0
+            self.RightChoice = RIGHT_ORDER[self.Level] == teleport:GetAttribute('Order') and true or false
+            -- self.Level = RIGHT_ORDER[self.Level] == teleport:GetAttribute('Order') and self.Level + 1 or 1
             self:ChangeLevel()
             task.wait(1)
             teleport.CanTouch = true
