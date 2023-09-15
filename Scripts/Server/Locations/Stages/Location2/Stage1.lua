@@ -3,7 +3,7 @@ local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 
 -- fix color correction
-
+-- fix gradient
 
 local SOUND_LEVELS = 4
 local COLOR_LEVELS = SOUND_LEVELS + 4
@@ -20,14 +20,14 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(game_, map, resourses, portal)
 	local self = setmetatable({}, Stage)
 
 	self.Game = game_
 	self.Map = map
 	self.Resourses = resourses
 	self.IsReady = false
-
+	self.Portal = portal
 	self.Level = 1
     self.Sounds = {}
 
@@ -46,8 +46,29 @@ function Stage:Init()
 	end
 
     repeat wait() until self.IsReady
-
+	self:FinishAction()
     print('finish stage')
+end
+
+function Stage:FinishAction()
+	local portal = Instance.new('Part')
+	portal.Parent = self.Room
+	portal.Size = Vector3.new(10,15,10)
+	portal.Anchored = true
+	portal.Position = self.Room:GetPivot().Position - Vector3.new(0, portal.Size.Y / 2, 0)
+
+	portal.Touched:Connect(function(hitPart)
+		local player = game.Players:GetPlayerFromCharacter(hitPart.Parent)
+		if not player then return end
+		player.Character.HumanoidRootPart.CFrame = self.Portal.CFrame
+		self.Portal:Destroy()
+		self.Room:Destroy()
+
+		for _, obj in pairs(self.Teleports) do
+			obj:Destroy()
+		end
+
+	end)
 end
 
 function Stage:Setup()
@@ -109,7 +130,7 @@ function Stage:SpawnRoom()
 		wallHeight = 40,
 	}
 
-	self.Room = self:CreateRoom(properties)
+	self.Room, self.Teleports = self:CreateRoom(properties)
 	self:CreateContent(self.Room)
 end
 
@@ -209,9 +230,7 @@ function Stage:CreateRoom(properties)
         teleport:SetAttribute('Order', index)
         teleport.Name = teleport:GetAttribute('TeleportFace')
         teleportList[teleport.Name] = teleport
-        -- print(teleportList)
         teleport.Touched:Connect(function(hitPart)
-            -- local humanoidRootPart = hitPart.Parent:FindFirstChild('HumanoidRootPart')
             local player = game.Players:GetPlayerFromCharacter(hitPart.Parent)
             if not player then return end
             teleport.CanTouch = false
@@ -223,18 +242,17 @@ function Stage:CreateRoom(properties)
             )
             print(teleport:GetAttribute('Order'))
             self.RightChoice = RIGHT_ORDER[self.Level] == teleport:GetAttribute('Order') and true or false
-            -- self.Level = RIGHT_ORDER[self.Level] == teleport:GetAttribute('Order') and self.Level + 1 or 1
             self:ChangeLevel()
             task.wait(1)
             teleport.CanTouch = true
         end)
-        -- local RIGHT_ORDER = {4, 3, 2, 1, 2, 1, 2, 1}
-        for _, obj in pairs(teleportList) do
-            if obj:GetAttribute('Order') == 1 then obj.Color = Color3.new(1,0,0) end
-            if obj:GetAttribute('Order') == 2 then obj.Color = Color3.new(0,1,0) end
-            if obj:GetAttribute('Order') == 3 then obj.Color = Color3.new(0,0,1) end
-            if obj:GetAttribute('Order') == 4 then obj.Color = Color3.new(1,1,1) end
-        end
+
+		-- for _, obj in pairs(teleportList) do
+        --     if obj:GetAttribute('Order') == 1 then obj.Color = Color3.new(1,0,0) end
+        --     if obj:GetAttribute('Order') == 2 then obj.Color = Color3.new(0,1,0) end
+        --     if obj:GetAttribute('Order') == 3 then obj.Color = Color3.new(0,0,1) end
+        --     if obj:GetAttribute('Order') == 4 then obj.Color = Color3.new(1,1,1) end
+        -- end
 	end
 	local function createCorridor(sidePosition, holeSize, index)
 		local corridorLength = 50
@@ -309,15 +327,11 @@ function Stage:CreateRoom(properties)
     for _, obj in pairs(corridorFolder:GetChildren()) do
         obj.Parent = model
     end
-    corridorFolder:Destroy()
-	-- делаем коридоры, градиент на стены от белого к черному и телепорты в конце
-	return model
+	corridorFolder:Destroy()
+	return model, teleportList
 end
 
 function Stage:CreateContent(room)
-	-- teleports into rooms walls are spawning here
-	-- we need to get walls potision and spawn teleports there
-	-- wrong teleports stops music
 
 	local function setupSpawnPoint()
 		print("Spawn is created")

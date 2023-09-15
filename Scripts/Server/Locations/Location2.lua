@@ -35,7 +35,6 @@ function Location.Create(game_)
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
     self.Stages = script.Parent.Stages:FindFirstChild(Location.Name) --:GetChildren()
     self.StageIndex = 1
-
     self.IsReady = false
 
     self:Init()
@@ -81,12 +80,12 @@ function Location:CreatePortals()
     for i = 1, 2 do
         local portal = Instance.new('Part')
         portal.Parent = self.Map
-        
         portal.Size = Vector3.new(5,10,5)
         portal.Color = Color3.new(1,1,1)
         portal.Anchored = true
         portal.Material = Enum.Material.Neon
-        
+        portal.CanCollide = false
+
         local rand = math.random
         portal.Position = Vector3.new(rand(-100, 90), -50, rand(-60, 50))
 
@@ -94,7 +93,7 @@ function Location:CreatePortals()
             if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
             portal:Destroy()
             local currentStage = require(self.Stages:FindFirstChild('Stage' .. self.StageIndex))
-            currentStage.Create(self.Game, self.Map, LocationResourses)
+            currentStage.Create(self.Game, self.Map, LocationResourses, portal)
             self.StageIndex += 1
         end)
     end
