@@ -93,7 +93,7 @@ function Location:CreatePortals()
             if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
             portal:Destroy()
             local currentStage = require(self.Stages:FindFirstChild('Stage' .. self.StageIndex))
-            currentStage.Create(self.Game, self.Map, LocationResourses, portal)
+            currentStage.Create(self.Game, self.Map, LocationResourses)
             self.StageIndex += 1
         end)
     end

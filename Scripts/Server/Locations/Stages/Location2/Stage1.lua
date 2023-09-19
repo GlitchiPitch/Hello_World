@@ -2,6 +2,8 @@ local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 
+local Stage1_1 = require(script.Parent.Stage1_1)
+
 -- fix color correction
 -- fix gradient
 
@@ -20,14 +22,13 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses, portal)
+function Stage.Create(game_, map, resourses)
 	local self = setmetatable({}, Stage)
 
 	self.Game = game_
 	self.Map = map
 	self.Resourses = resourses
-	self.IsReady = false
-	self.Portal = portal
+	self.IsReady = true
 	self.Level = 1
     self.Sounds = {}
 
@@ -60,14 +61,12 @@ function Stage:FinishAction()
 	portal.Touched:Connect(function(hitPart)
 		local player = game.Players:GetPlayerFromCharacter(hitPart.Parent)
 		if not player then return end
-		player.Character.HumanoidRootPart.CFrame = self.Portal.CFrame
-		self.Portal:Destroy()
 		self.Room:Destroy()
 
 		for _, obj in pairs(self.Teleports) do
 			obj:Destroy()
 		end
-
+		local stage1_1 = Stage1_1.Create(self.Game, self.Map, self.Resourses)
 	end)
 end
 

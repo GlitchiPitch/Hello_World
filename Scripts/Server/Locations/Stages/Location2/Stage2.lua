@@ -21,6 +21,7 @@ function Stage.Create(game_, map, resourses)
 end
 
 function Stage:Init()
+    -- this is prismatic riddle
     print('Stage 2 init')
 end
 
