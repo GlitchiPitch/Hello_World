@@ -1,3 +1,4 @@
+local Lighting = game:GetService("Lighting")
 local Stage = {}
 
 Stage.__index = Stage
@@ -34,12 +35,38 @@ function Stage:SpawnRoom()
     self:CreateContent()
 end
 
+function Stage:ChangeStage(color)
+    print('changes')
+    for _, obj in pairs(self.Room:GetChildren()) do
+        if obj:IsA('Part') then
+            obj.Color = color
+        end
+    end
+
+    -- self:ChangeLighting(color)
+    self:ChangePlayerCamera()
+end
+
+function Stage:ChangePlayerCamera()
+    self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = 5}, Camera = {FieldOfView = 10}})
+    
+end
+
+function Stage:ChangeLighting(color)
+    Lighting.Ambient = color
+    Lighting.OutdoorAmbient = color
+    Lighting.Brightness = 10
+end
+
 function Stage:CreateRoom()
-    local value = 5
-    local addedVector = Vector3.new(10,10,10)
+    local value = 7
+    local addedVector = Vector3.new(30,30,30)
 
     local model = Instance.new('Model')
     model.Parent = workspace
+
+    local voids = Instance.new('Folder')
+    voids.Parent = model
 
     local function createNodes()
         local nodes = {}
@@ -62,33 +89,83 @@ function Stage:CreateRoom()
         part.Size = size
         part.Position = pos
         part.Color = color or Color3.new(.5,.5,.5)
+
+        return part
     end
 
-    local function createLadder(startPos, size)
-        createPart(size, startPos, Color3.new(1,0,0))
-        for i = 1, value do
-            createPart(size, startPos + Vector3.new(0, 2 * i, 0), Color3.new(1,0,0))
-            createPart(size, startPos + Vector3.new(0, -2 * i, 0), Color3.new(1,0,0))
+    -- need use math.floor for conditions
+    local function createLadder(node)
+        if (node[1] == 4 and node[2] == 4) or (node[3] == 4 and node[2] == 4) then 
+            local size = Vector3.new(node[3] == 4 and 1 or addedVector.X, 1, node[1] == 4 and 1 or addedVector.Z)
+            local pos = (Vector3.new(table.unpack(node)) * addedVector) + 
+            Vector3.new(
+                node[3] == 4 and (node[1] == 1 and addedVector.X / 2 or -addedVector.X / 2) or 0, 
+                0, 
+                node[1] == 4 and (node[3] == 1 and addedVector.Z / 2 or -addedVector.Z / 2) or 0
+            )
+            createPart(size, pos, Color3.new(1,0,0))
+            for i = 1, value ^ 2 do
+                createPart(size, pos + Vector3.new(0, 2 * i, 0), Color3.new(1,0,0))
+                createPart(size, pos + Vector3.new(0, -2 * i, 0), Color3.new(1,0,0))
+            end
         end
     end
+
+    local voidColor = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1)}
+    local colorIndex = 1
+
+    local function createVoid(node)
+        -- for second step
+        -- (node[1] == 2 or node[1] == value - 1) and (node[3] ~= 1 or node[3] ~= value) and node[3] % 2 == 1 or (node[3] == 2 or node[3] == value - 1) and (node[1] ~= 1 or node[1] ~= value) and node[1] % 2 == 1 
+
+        local function setupVoid(void)
+            if colorIndex > #voidColor then
+                colorIndex = 1
+            end
+            void.Color = voidColor[colorIndex]
+            colorIndex += 1
+            void.Parent = voids
+            void.Touched:Connect(function(hitPart)
+                if self.Game.Player.Character == hitPart.Parent then
+                    void.CanTouch = false
+                    self.Game.Player.Character:MoveTo(self.PlayerSpawnPoint.Position)
+                    self:ChangeStage(void.Color)
+                    task.wait(1)
+                    void.CanTouch = true
+                end
+            end)
+        end
+
+        if (node[1] == 1 or node[1] == value) and (node[3] > 1 and node[3] < value) and (node[3] % 2 == 1) or 
+        (node[3] == 1 or node[3] == value) and (node[1] > 1 and node[1] < value) and (node[1] % 2 == 1) then
+            if (node[2] > 1 and node[2] < value) and (node[2] % 2 == 1) then
+                    local size = addedVector - 
+                    Vector3.new(
+                        (node[1] == 1 or node[1] == value) and addedVector.X - 1 or 0,
+                        0, 
+                        (node[3] == 1 or node[3] == value) and addedVector.Z - 1 or 0
+                    )
+                    local pos = Vector3.new(table.unpack(node)) * addedVector
+                    setupVoid(createPart(size, pos))
+                    return true 
+            end
+        end
+        return false
+    end
+
     local function createNode(node)
-        local size = addedVector - Vector3.new(1,1,1)
+        local size = addedVector
         local pos = Vector3.new(table.unpack(node)) * addedVector
         createPart(size, pos)
     end
     for _, node in pairs(nodes) do
         if (node[1] == 1 or node[1] == value) or (node[3] == 1 or node[3] == value) or (node[2] == 1 or node[2] == value) then 
-            if (node[1] == 3 and node[2] == 3) or (node[3] == 3 and node[2] == 3) then 
-                local size = Vector3.new(node[3] == 3 and 1 or addedVector.X / 2, 1, node[1] == 3 and 1 or addedVector.Z / 2)
-                local pos = (Vector3.new(table.unpack(node)) * addedVector) + 
-                Vector3.new(
-                    node[3] == 3 and (node[1] == 1 and addedVector.X / 2 or -addedVector.X / 2) or 0, 
-                    0, 
-                    node[1] == 3 and (node[3] == 1 and addedVector.Z / 2 or -addedVector.Z / 2) or 0
-                )
-                createLadder(pos, size)
+            createLadder(node)
+            if createVoid(node) then
+                continue
+            else
+                createNode(node)
             end
-            createNode(node)
         end
     end
 

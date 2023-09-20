@@ -13,7 +13,7 @@ ReplicatedFirst:RemoveDefaultLoadingScreen()
 local ClientManager = {}
 
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
-
+    -- print('change camera')
     local canRunning = true
     
     if propertyList.Character.CanRunning then
@@ -121,6 +121,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
         end
 
         Camera.FieldOfView = FieldOfView
+        print(FieldOfView)
 
         FieldOfView = lerp(FieldOfView, defFOV, easingtime)
 
@@ -129,6 +130,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     
             if w and not lshift then
                 FieldOfView = lerp(FieldOfView, defFOV, easingtime)
+                print(FieldOfView)
                 human.WalkSpeed = lerp(human.WalkSpeed ,walkspeeds.walkingspeed, easingtime)
             elseif (w and a) or (w and d) then
                 human.WalkSpeed = lerp(human.WalkSpeed,walkspeeds.diagonalspeed, easingtime)

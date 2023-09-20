@@ -15,7 +15,6 @@ function PlayerManager.SetupCharacter(player, propertyList)
     local humanoid = character:FindFirstChild("Humanoid")
 	if propertyList.Character then
         print('setup')
-        -- print(propertyList)
 		humanoid.WalkSpeed = propertyList.WalkSpeed
 	end
     
