@@ -1,4 +1,11 @@
 local Lighting = game:GetService("Lighting")
+
+local START_COLOR = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1)}
+START_COLOR = START_COLOR[math.random(#START_COLOR)]
+-- when room's color will be more equals gray then camera and speed of player will become more claim and slowly and sounds become quietly
+
+-- можно заюзать ближе к выолнению задания выбор рандомного цвета для каждой ячейки и через твин анимировать изменение каждой ячейки с увеличением звука и цвета и света
+
 local Stage = {}
 
 Stage.__index = Stage
@@ -28,9 +35,12 @@ function Stage:Init()
 	end
 
     repeat wait() until self.IsReady
+
+    print('stage is done')
 end
 
 function Stage:SpawnRoom()
+    self.RoomColor = START_COLOR
     self.Room = self:CreateRoom()
     self:CreateContent()
 end
@@ -39,12 +49,16 @@ function Stage:ChangeStage(color)
     print('changes')
     for _, obj in pairs(self.Room:GetChildren()) do
         if obj:IsA('Part') then
-            obj.Color = color
+            obj.Color = self:CalculateColor(obj.Color, color)
         end
     end
 
-    -- self:ChangeLighting(color)
-    self:ChangePlayerCamera()
+    self:ChangeLighting(color)
+    -- self:ChangePlayerCamera()
+    print(self.RoomColor)
+    if self.RoomColor == Color3.new(.5,.5,.5) then
+        self.IsReady = true
+    end
 end
 
 function Stage:ChangePlayerCamera()
@@ -52,10 +66,45 @@ function Stage:ChangePlayerCamera()
     
 end
 
+-- for calculating colors use hsv or :lerp
+
+function Stage:CalculateColor(prevColor, color)
+
+    local value = .1
+
+    if color == Color3.new(0,0,0) then value = -value end
+
+    local nextColor = Color3.new(
+        (color.R == 1 and prevColor.R + (prevColor.R < 1 and value or -value)) or 
+        (value < 0 and (prevColor.R > 0 and prevColor.R + value) or prevColor.R),
+
+        (color.G == 1 and prevColor.G + (prevColor.G < 1 and value or -value)) or 
+        (value < 0 and (prevColor.G > 0 and prevColor.G + value) or prevColor.G),
+
+        (color.B == 1 and prevColor.B + (prevColor.B < 1 and value or -value)) or 
+        (value < 0 and (prevColor.B > 0 and prevColor.B + value) or prevColor.B)
+
+    )
+    -- local nextColor = Color3.new(
+    --     (color.R == 1 and prevColor.R + (prevColor.R < 1 and value or -value)) or 
+    --     (value < 0 and (prevColor.R > 0 and prevColor.R + value) or prevColor.R),
+
+    --     (color.G == 1 and prevColor.G + (prevColor.G < 1 and value or -value)) or 
+    --     (value < 0 and (prevColor.G > 0 and prevColor.G + value) or prevColor.G),
+
+    --     (color.B == 1 and prevColor.B + (prevColor.B < 1 and value or -value)) or 
+    --     (value < 0 and (prevColor.B > 0 and prevColor.B + value) or prevColor.B)
+
+    -- )
+
+    self.RoomColor = nextColor
+    return nextColor
+end
+
 function Stage:ChangeLighting(color)
-    Lighting.Ambient = color
-    Lighting.OutdoorAmbient = color
-    Lighting.Brightness = 10
+    Lighting.Ambient = self:CalculateColor(Lighting.Ambient, color)
+    Lighting.OutdoorAmbient = self:CalculateColor(Lighting.OutdoorAmbient, color)
+    -- Lighting.Brightness = 10
 end
 
 function Stage:CreateRoom()
@@ -81,14 +130,14 @@ function Stage:CreateRoom()
     end
 
     local nodes = createNodes()
-    
+    print(START_COLOR)
     local function createPart(size, pos, color)
         local part = Instance.new('Part')
         part.Parent = model
         part.Anchored = true
         part.Size = size
         part.Position = pos
-        part.Color = color or Color3.new(.5,.5,.5)
+        part.Color = color or START_COLOR
 
         return part
     end
@@ -111,7 +160,7 @@ function Stage:CreateRoom()
         end
     end
 
-    local voidColor = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1)}
+    local voidColor = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(0,0,0), Color3.new(1,1,1)}
     local colorIndex = 1
 
     local function createVoid(node)
@@ -130,6 +179,7 @@ function Stage:CreateRoom()
                     void.CanTouch = false
                     self.Game.Player.Character:MoveTo(self.PlayerSpawnPoint.Position)
                     self:ChangeStage(void.Color)
+                    self.Level += 1
                     task.wait(1)
                     void.CanTouch = true
                 end
