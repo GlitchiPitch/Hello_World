@@ -16,7 +16,7 @@ function Stage.Create(game_, map, resourses)
 	self.Game = game_
 	self.Map = map
 	self.Resourses = resourses
-	self.IsReady = false
+	self.IsReady = true
 	self.Level = 1
     self.Sounds = {}
 
@@ -35,8 +35,13 @@ function Stage:Init()
 	end
 
     repeat wait() until self.IsReady
-
+    self:FinishAction()
     print('stage is done')
+end
+
+function Stage:FinishAction()
+    self.Game.Player.Character:MoveTo(Vector3.new(0,5,0))
+    self.Room:Destroy()
 end
 
 function Stage:SpawnRoom()
@@ -46,15 +51,16 @@ function Stage:SpawnRoom()
 end
 
 function Stage:ChangeStage(color)
-    print('changes')
+    -- print('change')
     for _, obj in pairs(self.Room:GetChildren()) do
         if obj:IsA('Part') then
-            obj.Color = self:CalculateColor(obj.Color, color)
+            local prevColor = obj.Color
+            obj.Color = self:CalculateColor(prevColor, color)
         end
     end
 
-    self:ChangeLighting(color)
-    -- self:ChangePlayerCamera()
+    -- self:ChangeLighting(color)
+    self:ChangePlayerCamera()
     print(self.RoomColor)
     if self.RoomColor == Color3.new(.5,.5,.5) then
         self.IsReady = true
@@ -62,7 +68,7 @@ function Stage:ChangeStage(color)
 end
 
 function Stage:ChangePlayerCamera()
-    self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = 5}, Camera = {FieldOfView = 10}})
+    self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = math.random(20, 100)}, Camera = {FieldOfView = math.random(80, 200)}})
     
 end
 
@@ -72,8 +78,10 @@ function Stage:CalculateColor(prevColor, color)
 
     local value = .1
 
-    if color == Color3.new(0,0,0) then value = -value end
+    if color == Color3.new(0, 0, 0) then value = -value end
 
+    -- local nextColor = prevColor
+    -- nextColor = Color3.new(math.floor(nextColor.R), math.floor(nextColor.G), math.floor(nextColor.B))
     local nextColor = Color3.new(
         (color.R == 1 and prevColor.R + (prevColor.R < 1 and value or -value)) or 
         (value < 0 and (prevColor.R > 0 and prevColor.R + value) or prevColor.R),
@@ -83,19 +91,7 @@ function Stage:CalculateColor(prevColor, color)
 
         (color.B == 1 and prevColor.B + (prevColor.B < 1 and value or -value)) or 
         (value < 0 and (prevColor.B > 0 and prevColor.B + value) or prevColor.B)
-
     )
-    -- local nextColor = Color3.new(
-    --     (color.R == 1 and prevColor.R + (prevColor.R < 1 and value or -value)) or 
-    --     (value < 0 and (prevColor.R > 0 and prevColor.R + value) or prevColor.R),
-
-    --     (color.G == 1 and prevColor.G + (prevColor.G < 1 and value or -value)) or 
-    --     (value < 0 and (prevColor.G > 0 and prevColor.G + value) or prevColor.G),
-
-    --     (color.B == 1 and prevColor.B + (prevColor.B < 1 and value or -value)) or 
-    --     (value < 0 and (prevColor.B > 0 and prevColor.B + value) or prevColor.B)
-
-    -- )
 
     self.RoomColor = nextColor
     return nextColor
@@ -130,7 +126,6 @@ function Stage:CreateRoom()
     end
 
     local nodes = createNodes()
-    print(START_COLOR)
     local function createPart(size, pos, color)
         local part = Instance.new('Part')
         part.Parent = model
@@ -152,10 +147,10 @@ function Stage:CreateRoom()
                 0, 
                 node[1] == 4 and (node[3] == 1 and addedVector.Z / 2 or -addedVector.Z / 2) or 0
             )
-            createPart(size, pos, Color3.new(1,0,0))
+            createPart(size, pos)
             for i = 1, value ^ 2 do
-                createPart(size, pos + Vector3.new(0, 2 * i, 0), Color3.new(1,0,0))
-                createPart(size, pos + Vector3.new(0, -2 * i, 0), Color3.new(1,0,0))
+                createPart(size, pos + Vector3.new(0, 2 * i, 0))
+                createPart(size, pos + Vector3.new(0, -2 * i, 0))
             end
         end
     end

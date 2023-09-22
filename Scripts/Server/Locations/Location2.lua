@@ -77,7 +77,7 @@ end
 -- end
 
 function Location:CreatePortals()
-    for i = 1, 2 do
+    for i = 1, 3 do
         local portal = Instance.new('Part')
         portal.Parent = self.Map
         portal.Size = Vector3.new(5,10,5)

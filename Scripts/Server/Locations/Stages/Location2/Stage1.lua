@@ -160,7 +160,7 @@ function Stage:CreateRoom(properties)
 	end
 
 	local function setupIllusionSurface(illusionWall)
-		illusionWall.Parent = workspace
+		illusionWall.Parent = workspace -- other parent
 		illusionWall.CanCollide = false
 		illusionWall.Transparency = 1
 

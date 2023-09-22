@@ -10,10 +10,13 @@ ReplicatedFirst:RemoveDefaultLoadingScreen()
 
 -- local MainGui = ReplicatedFirst:WaitForChild('MainGui')
 
+
+local CONNECT
+
+
 local ClientManager = {}
 
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
-    -- print('change camera')
     local canRunning = true
     
     if propertyList.Character.CanRunning then
@@ -48,15 +51,6 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
         runningspeed = propertyList.Character.WalkSpeed * 3; 
         runningFOV=	propertyList.Camera.FieldOfView + (propertyList.Camera.FieldOfView * .5); 
     }
-    -- local walkspeeds = {
-    --     enabled =		  true;
-    --     walkingspeed =		8; propertyList.Character.WalkSpeed
-    --     backwardsspeed =	10; propertyList.Character.WalkSpeed + 2
-    --     sidewaysspeed =		15; propertyList.Character.WalkSpeed + 7
-    --     diagonalspeed =		16; propertyList.Character.WalkSpeed * 2
-    --     runningspeed =		25; propertyList.Character.WalkSpeed * 3
-    --     runningFOV=			100; propertyList.Camera.FieldOfView + (propertyList.Camera.FieldOfView * .5)
-    -- }
 
     local w, a, s, d, lshift = false, false, false, false, false
 
@@ -97,7 +91,9 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
         end
     end)
 
-    RunService.RenderStepped:Connect(function()
+    if CONNECT and CONNECT.Connected then CONNECT:Disconnect() end
+
+    CONNECT = RunService.RenderStepped:Connect(function()
 
         if running then
             CamPos *= 0.28 
