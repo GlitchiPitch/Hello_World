@@ -9,6 +9,7 @@ local Events = require(Modules.Events)
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
 -- local MainGui = ReplicatedFirst:WaitForChild('MainGui')
+-- today make a grab system
 
 
 local CONNECT

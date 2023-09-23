@@ -6,11 +6,12 @@ START_COLOR = START_COLOR[math.random(#START_COLOR)]
 
 -- можно заюзать ближе к выолнению задания выбор рандомного цвета для каждой ячейки и через твин анимировать изменение каждой ячейки с увеличением звука и цвета и света
 
+
 local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(game_, map, resourses, portal)
     local self = setmetatable({}, Stage)
 
 	self.Game = game_
@@ -19,7 +20,7 @@ function Stage.Create(game_, map, resourses)
 	self.IsReady = true
 	self.Level = 1
     self.Sounds = {}
-
+    self.StagePortal = portal
 	self.PlayerSpawnPoint = nil
 	self:Init()
 
@@ -40,8 +41,9 @@ function Stage:Init()
 end
 
 function Stage:FinishAction()
-    self.Game.Player.Character:MoveTo(Vector3.new(0,5,0))
+    self.Game.Player.Character:MoveTo(self.StagePortal.Position)
     self.Room:Destroy()
+    self.StagePortal:Destroy()
 end
 
 function Stage:SpawnRoom()

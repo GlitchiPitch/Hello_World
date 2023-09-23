@@ -33,9 +33,11 @@ function Location.Create(game_)
     self.Game = game_
 
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
-    self.Stages = script.Parent.Stages:FindFirstChild(Location.Name) --:GetChildren()
+    self.Stages = script.Parent.Stages:FindFirstChild(Location.Name)
     self.StageIndex = 1
     self.IsReady = false
+
+    self.Event = Instance.new('BindableEvent')
 
     self:Init()
 
@@ -49,6 +51,11 @@ function Location:Init()
 
     self.Game.Player:LoadCharacter() -- this is temporary solution
     self.Game.PlayerManager.SetupCharacter(self.Game.Player, Location.PlayerProperty)
+
+    -- self.Event.Event:Connect(function()
+    --     print('event')
+    --     self.IsReady = true
+    -- end)
 
     repeat wait() until self.IsReady
     print('Location 2 is ready')
@@ -77,7 +84,7 @@ end
 -- end
 
 function Location:CreatePortals()
-    for i = 1, 3 do
+    for i = 1, 2 do
         local portal = Instance.new('Part')
         portal.Parent = self.Map
         portal.Size = Vector3.new(5,10,5)
@@ -89,11 +96,14 @@ function Location:CreatePortals()
         local rand = math.random
         portal.Position = Vector3.new(rand(-100, 90), -50, rand(-60, 50))
 
+        
         portal.Touched:Connect(function(hitPart)
             if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
-            portal:Destroy()
+            portal.CanTouch = false
             local currentStage = require(self.Stages:FindFirstChild('Stage' .. self.StageIndex))
-            currentStage.Create(self.Game, self.Map, LocationResourses)
+            -- if self.StageIndex == 2 then currentStage.Create(self.Game, self.Map, LocationResourses, portal, self)
+            -- else currentStage.Create(self.Game, self.Map, LocationResourses, portal) end
+            currentStage.Create(self.Game, self.Map, LocationResourses, portal)
             self.StageIndex += 1
         end)
     end

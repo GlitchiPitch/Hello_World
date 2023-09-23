@@ -6,6 +6,8 @@ local Stage1_1 = require(script.Parent.Stage1_1)
 
 -- fix color correction
 -- fix gradient
+-- передать в этап 1_1 последний цвет комнаты
+-- телепорт на следующую комнату будет как vpx портал ведущий на локацию2.1
 
 local SOUND_LEVELS = 4
 local COLOR_LEVELS = SOUND_LEVELS + 4
@@ -22,7 +24,7 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(game_, map, resourses, portal)
 	local self = setmetatable({}, Stage)
 
 	self.Game = game_
@@ -31,6 +33,7 @@ function Stage.Create(game_, map, resourses)
 	self.IsReady = true
 	self.Level = 1
     self.Sounds = {}
+	self.StagePortal = portal
 
 	self.PlayerSpawnPoint = nil
 	self:Init()
@@ -66,7 +69,7 @@ function Stage:FinishAction()
 		for _, obj in pairs(self.Teleports) do
 			obj:Destroy()
 		end
-		local stage1_1 = Stage1_1.Create(self.Game, self.Map, self.Resourses)
+		local stage1_1 = Stage1_1.Create(self.Game, self.Map, self.Resourses, self.StagePortal)
 	end)
 end
 
