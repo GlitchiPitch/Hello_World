@@ -162,11 +162,12 @@ function Stage:CreateRoom(properties)
 		return wall
 	end
 
+	local teleportList = {}
 	local function setupIllusionSurface(illusionWall)
 		illusionWall.Parent = workspace -- other parent
 		illusionWall.CanCollide = false
 		illusionWall.Transparency = 1
-
+		table.insert(teleportList, illusionWall)
 		local surface = Instance.new("SurfaceGui")
 		surface.Parent = illusionWall
 		local solid = Instance.new("Frame")
@@ -200,7 +201,6 @@ function Stage:CreateRoom(properties)
 		createWallGradient(wall)
 	end
     
-    local teleportList = {}
 	local function setupTeleport(teleport, index)
 		if teleport.Size.X > 1 then
 			teleport:SetAttribute(
