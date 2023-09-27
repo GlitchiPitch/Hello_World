@@ -1,3 +1,4 @@
+local CollectionService = game:GetService("CollectionService")
 local ServerStorage = game:GetService("ServerStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -30,9 +31,6 @@ local Stage = {}
 -- надо спавнить три комнаты с разными размерами
 -- надо спавнить разное количество сигналов и в разных местах
 -- надо спавнить комнаты после касания к телепорту
-
-
-
 
 Stage.__index = Stage
 
@@ -101,17 +99,17 @@ function Stage:SetupSignals(particle, bit)
 	TweenService:Create(particle, tInfo, { ImageTransparency = 1 }):Play()
 end
 
-function Stage:SetupTouchedPart(touchedPart, bit)
-	local touchedList = bit == 0 and self.SignalList.Short or self.SignalList.Long
-	touchedPart.touchedPart.Touched:Connect(function(hitPart)
+function Stage:SetupSignalPlatform(signalPlatform, bit)
+	local signalPlatformType = bit == 0 and self.SignalList.Short or self.SignalList.Long
+	signalPlatform.touchedPart.Touched:Connect(function(hitPart)
 		if game:GetService("CollectionService"):HasTag(hitPart, "Interact") then
-			table.insert(touchedList, hitPart)
+			table.insert(signalPlatformType, hitPart)
 		end
 	end)
 
-	touchedPart.touchedPart.TouchEnded:Connect(function(hitPart)
-		if table.find(touchedList, hitPart, 1) and game:GetService("CollectionService"):HasTag(hitPart, "Interact") then
-			table.remove(touchedList, table.find(touchedList, hitPart, 1))
+	signalPlatform.touchedPart.TouchEnded:Connect(function(hitPart)
+		if table.find(signalPlatformType, hitPart, 1) and game:GetService("CollectionService"):HasTag(hitPart, "Interact") then
+			table.remove(signalPlatformType, table.find(signalPlatformType, hitPart, 1))
 		end
 	end)
 end
@@ -142,10 +140,10 @@ function Stage:CreateSingals(p1, p2)
 		particle.Parent = gui
 		self:SetupSignals(particle, (i - 1))
 
-		local touchedPart = self.Resourses.Items:FindFirstChild("TouchedPart"):Clone()
-		touchedPart.Parent = model
-		touchedPart:PivotTo(CFrame.new(part.CFrame.Position - Vector3.new(0, 5, 0)) * touchedPart:GetPivot().Rotation)
-		self:SetupTouchedPart(touchedPart, (i - 1))
+		local signalPlatform = self.Resourses.Items:FindFirstChild("SignalPlatform"):Clone()
+		signalPlatform.Parent = model
+		signalPlatform:PivotTo(CFrame.new(part.CFrame.Position - Vector3.new(0, 5, 0)) * signalPlatform:GetPivot().Rotation)
+		self:SetupSignalPlatform(signalPlatform, (i - 1))
 
 		table.insert(self.Signals, model)
 	end
@@ -273,20 +271,36 @@ function Stage:CreateRoomContent(roomModel)
 
 		self:CreateSingals(pyramid1:GetPivot(), pyramid2:GetPivot())
 		self:CreatePortalBetweenRooms(roomModel)
+		self:CreateCubes(roomModel)
 end
 
 function Stage:CreatePortalBetweenRooms(roomModel)
 	local roomPivot = roomModel:GetPivot()
 	local _, roomSize = roomModel:GetBoundingBox()
 	local size = Vector3.new(10,10,10)
-	local pos = Vector3.new(roomPivot.X, roomPivot.Y - roomSize.Y / 2 + size.Y / 2, roomPivot.Z - roomSize.Z / 2)
+	local pos = Vector3.new(roomPivot.X, roomPivot.Y - roomSize.Y / 2 + size.Y, roomPivot.Z - roomSize.Z / 2)
 	local door = createPart(pos, size, roomModel)
 	door.Color = Color3.new(1,1,0)
 	door.Material = Enum.Material.Neon
+
+	door.Touched:Connect(function(hitPart)
+		if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
+		if #self.LongSignalFolder == 0 or #self.ShortSignalFolder == 0 then return end
+		-- положить в папки в сторадж кубики и удалить предыдущие комнату
+	end)
 end
 
-function Stage:CreateCubes()
-	
+function Stage:CreateCubes(roomModel)
+	local roomPivot = roomModel:GetPivot()
+	local IceCubesFolder = Instance.new('Folder')
+	IceCubesFolder.Parent = roomModel
+	for i = 1, math.random(10, 20) do
+		local cube = createPart(roomPivot.Position + Vector3.new(math.random(-roomPivot.Position.X / 4, roomPivot.Position.X / 4), 0, math.random(-roomPivot.Position.Z / 4, roomPivot.Position.Z / 4)), Vector3.new(1,1,1), IceCubesFolder)
+		cube.Anchored = false
+		cube.BrickColor = BrickColor.random()
+		CollectionService:AddTag(cube, 'Interact')
+		-- wait(2)
+	end
 end
 
 function Stage:SpawnRoom()
@@ -330,9 +344,7 @@ function Stage:CreatePort()
 	finishTrigger.Size = Vector3.new(10, 10, 10)
 
 	finishTrigger.Touched:Connect(function(hitPart)
-		if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then
-			return
-		end
+		if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
 		self.IsReady = true
 		finishTrigger:Destroy()
 	end)
