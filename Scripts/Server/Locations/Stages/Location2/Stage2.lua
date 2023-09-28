@@ -51,7 +51,7 @@ function Stage.Create(game_, map, resourses, event)
 		Short = {},
 	}
 
-	self.Level = 1
+	self.Level = 2
 
 	self.PlayerSpawnPoint = nil
 	self:Init()
@@ -115,6 +115,13 @@ function Stage:SetupSignalPlatform(signalPlatform, bit)
 end
 
 function Stage:CreateSingals(p1, p2)
+
+	-- they are different in the different level
+	-- на первом уровне они получают кубики и создают потом папку, на след уровне они должны проверять что кубки им положили правильные 
+	-- вторую комнату будет прикольно сделать с дырками в полу, которые будут определять каждую букву и когда игрок будет туда кидать нужные кубики, то кубик затухает 
+	-- и в чате пишется буква 
+	-- в следующих комнатах сигналы будут вглядеть как платформы на глубине с неоновым светом и туда надо кидать кубики
+
 	local l = { p1.Position, p2.Position }
 
 	for i, pos in pairs(l) do
@@ -149,7 +156,7 @@ function Stage:CreateSingals(p1, p2)
 	end
 end
 
-function Stage:CreateRoom(properties, roomModel)
+function Stage:CreateRoom(properties, roomModel, existFloor)
 	local value = properties.wallsPositionValue
 		local y = 10
 		local wallHeight = properties.wallHeight
@@ -161,7 +168,7 @@ function Stage:CreateRoom(properties, roomModel)
 
 		local multiplyValue = 2
 
-		for i = 1, 6 do
+		for i = 1, not existFloor and 5 or 6 do
 			if nodesPositions[i] then
 				local sidePosition = Vector3.new(table.unpack(nodesPositions[i]))
 
@@ -181,97 +188,147 @@ function Stage:CreateRoom(properties, roomModel)
 			else
 				local _, modelSize = model:GetBoundingBox()
 				local pos = model:GetPivot().Position
-					+ (i % 2 == 0 and Vector3.new(0, modelSize.Y / 2, 0) or Vector3.new(0, -modelSize.Y / 2, 0))
+					+ (i % 2 == 1 and Vector3.new(0, modelSize.Y / 2, 0) or Vector3.new(0, -modelSize.Y / 2, 0))
 				local size = Vector3.new(modelSize.X, 1, modelSize.Z)
 				createPart(pos, size, model)
 			end
 		end
 end
 
+function Stage:CreatePyramid(contentModel, roomModel)
+	local function createPyramid()
+		local pyramidModel = Instance.new("Model")
+		pyramidModel.Parent = contentModel
+
+		local value = 10
+		local y = 10
+
+		local nodesPositions = nodes(value, y)
+		local size = Vector3.new(10, 10, 10)
+
+		for i = 1, 6 do
+			if nodesPositions[i] then
+				local pos = Vector3.new(table.unpack(nodesPositions[i]))
+				local orientation = pos.X == 0 and (pos.Z < 0 and Vector3.new(0, 0, 0) or Vector3.new(0, 180, 0))
+					or pos.Z == 0 and (pos.X < 0 and Vector3.new(0, 90, 0) or Vector3.new(0, -90, 0))
+				local wedge = createPart(pos, size, pyramidModel)
+				wedge.Shape = Enum.PartType.Wedge
+				wedge.Orientation = orientation
+				wedge.Color = Color3.new(1, 0, 0)
+			else
+				local vector1 = i % 2 == 0 and Vector3.new(table.unpack(nodesPositions[1]))
+					or Vector3.new(table.unpack(nodesPositions[3]))
+				local vector2 = i % 2 == 0 and Vector3.new(table.unpack(nodesPositions[2]))
+					or Vector3.new(table.unpack(nodesPositions[4]))
+				local pos = Vector3.new(vector1.X, 0, vector1.Z)
+					+ Vector3.new(vector2.X, 0, vector2.Z)
+					+ Vector3.new(0, y, 0)
+
+				local function corner(pos, orientation)
+					local cornerWedge = createPart(pos, size, pyramidModel)
+					cornerWedge.Shape = Enum.PartType.CornerWedge
+					cornerWedge.Color = Color3.new(0, 1, 0)
+					cornerWedge.Orientation = orientation
+
+					return cornerWedge
+				end
+
+				local c = corner(pos, pos.Z < 0 and Vector3.new(0, -90, 0) or Vector3.new(0, 90, 0))
+				c.Color = Color3.new(1, 1, 0)
+				c.Name = i
+				local c2 = corner(
+					pos.Z < 0 and Vector3.new(pos.X, pos.Y, math.abs(pos.Z)) or Vector3.new(pos.X, pos.Y, -pos.Z),
+					pos.Z < 0 and Vector3.new(0, 0, 0) or Vector3.new(0, 180, 0)
+				)
+				c2.Color = Color3.new(1, 0, 1)
+				c2.Name = i .. "2"
+			end
+			local pos = Vector3.new(0, y, 0)
+			createPart(pos, size, pyramidModel)
+		end
+		
+		return pyramidModel
+	end
+
+	local roomPivot = roomModel:GetPivot()
+	local _, roomSize = roomModel:GetBoundingBox()
+	local pyramid1 = createPyramid()
+	local _, size = pyramid1:GetBoundingBox()
+	pyramid1:PivotTo(
+		CFrame.new(
+			-(roomPivot.X + roomSize.X / 2) + 1 + size.X / 2,
+			(roomPivot.Y - roomSize.Y / 2) + 1 + size.Y / 2,
+			roomPivot.Z
+		)
+	)
+	local pyramid2 = createPyramid()
+	local _, size = pyramid2:GetBoundingBox()
+	pyramid2:PivotTo(
+		CFrame.new(
+			(roomPivot.X + roomSize.X / 2) - 1 - size.X / 2,
+			(roomPivot.Y - roomSize.Y / 2) + 1 + size.Y / 2,
+			roomPivot.Z
+		)
+	)
+
+	self:CreateSingals(pyramid1:GetPivot(), pyramid2:GetPivot())
+end
+
+function Stage:CreateSignalsField(contentModel, roomModel)
+
+	local value = 11
+	local startVector = roomModel:GetPivot().Position
+	local _, sizeRoom = roomModel:GetBoundingBox()
+	startVector = Vector3.new(startVector.X - sizeRoom.X / 2, startVector.Y - sizeRoom.Y / 2, startVector.Z - sizeRoom.Z / 2)
+
+	local fieldModel = Instance.new('Model')
+	fieldModel.Parent = contentModel
+
+	print(math.floor(sizeRoom.X / 8))
+	print(math.floor(sizeRoom.Z / 8))
+
+	local function createNodes()
+        local nodes = {}
+        for x = 1, math.floor(sizeRoom.X / 4) - 5 do
+            for z = 1, math.floor(sizeRoom.Z / 4) - 2 do 
+                    table.insert(nodes, {x, 0, z})
+            end
+        end
+        return nodes
+    end
+	
+	for i, node in pairs(createNodes()) do
+		local isSignalPart = node[1] % 2 == 0 and node[1] < value and node[3] % 2 == 0 and node[3] < value --(i > value and i < value ^ 2) and i % 2 == 0
+		local size = Vector3.new(5,1,5)
+		local pos = (startVector - Vector3.new(size.X / 2, 0, size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на этот вектор
+		Vector3.new(size.X, 0, size.Z)) + 
+		Vector3.new(
+			0,
+			isSignalPart and -10 or 0,
+			0
+		)
+		local part = createPart(pos, size, fieldModel)
+		part.Color = Color3.new(0,1,1)
+		if isSignalPart then 
+			local singalPart = part:Clone()
+			singalPart.Parent = part.Parent
+			singalPart.Material, singalPart.Color = Enum.Material.Neon, Color3.new(1,1,1)
+			part.Transparency = 1
+		end
+	end
+
+end
+
 function Stage:CreateRoomContent(roomModel)
 	local contentModel = Instance.new("Model")
-		contentModel.Parent = roomModel
+	contentModel.Parent = roomModel
 
 		-- надо получать разное количество граней у горок, разные позицию для них и разное количество
 
-		local function createPyramid()
-			local pyramidModel = Instance.new("Model")
-			pyramidModel.Parent = contentModel
-
-			local value = 10
-			local y = 10
-
-			local nodesPositions = nodes(value, y)
-			local size = Vector3.new(10, 10, 10)
-
-			for i = 1, 6 do
-				if nodesPositions[i] then
-					local pos = Vector3.new(table.unpack(nodesPositions[i]))
-					local orientation = pos.X == 0 and (pos.Z < 0 and Vector3.new(0, 0, 0) or Vector3.new(0, 180, 0))
-						or pos.Z == 0 and (pos.X < 0 and Vector3.new(0, 90, 0) or Vector3.new(0, -90, 0))
-					local wedge = createPart(pos, size, pyramidModel)
-					wedge.Shape = Enum.PartType.Wedge
-					wedge.Orientation = orientation
-					wedge.Color = Color3.new(1, 0, 0)
-				else
-					local vector1 = i % 2 == 0 and Vector3.new(table.unpack(nodesPositions[1]))
-						or Vector3.new(table.unpack(nodesPositions[3]))
-					local vector2 = i % 2 == 0 and Vector3.new(table.unpack(nodesPositions[2]))
-						or Vector3.new(table.unpack(nodesPositions[4]))
-					local pos = Vector3.new(vector1.X, 0, vector1.Z)
-						+ Vector3.new(vector2.X, 0, vector2.Z)
-						+ Vector3.new(0, y, 0)
-
-					local function corner(pos, orientation)
-						local cornerWedge = createPart(pos, size, pyramidModel)
-						cornerWedge.Shape = Enum.PartType.CornerWedge
-						cornerWedge.Color = Color3.new(0, 1, 0)
-						cornerWedge.Orientation = orientation
-
-						return cornerWedge
-					end
-
-					local c = corner(pos, pos.Z < 0 and Vector3.new(0, -90, 0) or Vector3.new(0, 90, 0))
-					c.Color = Color3.new(1, 1, 0)
-					c.Name = i
-					local c2 = corner(
-						pos.Z < 0 and Vector3.new(pos.X, pos.Y, math.abs(pos.Z)) or Vector3.new(pos.X, pos.Y, -pos.Z),
-						pos.Z < 0 and Vector3.new(0, 0, 0) or Vector3.new(0, 180, 0)
-					)
-					c2.Color = Color3.new(1, 0, 1)
-					c2.Name = i .. "2"
-				end
-				local pos = Vector3.new(0, y, 0)
-				createPart(pos, size, pyramidModel)
-			end
-			
-			return pyramidModel
-		end
-
-		local roomPivot = roomModel:GetPivot()
-		local _, roomSize = roomModel:GetBoundingBox()
-		local pyramid1 = createPyramid()
-		local _, size = pyramid1:GetBoundingBox()
-		pyramid1:PivotTo(
-			CFrame.new(
-				-(roomPivot.X + roomSize.X / 2) + 1 + size.X / 2,
-				(roomPivot.Y - roomSize.Y / 2) + 1 + size.Y / 2,
-				roomPivot.Z
-			)
-		)
-		local pyramid2 = createPyramid()
-		local _, size = pyramid2:GetBoundingBox()
-		pyramid2:PivotTo(
-			CFrame.new(
-				(roomPivot.X + roomSize.X / 2) - 1 - size.X / 2,
-				(roomPivot.Y - roomSize.Y / 2) + 1 + size.Y / 2,
-				roomPivot.Z
-			)
-		)
-
-		self:CreateSingals(pyramid1:GetPivot(), pyramid2:GetPivot())
-		self:CreatePortalBetweenRooms(roomModel)
-		self:CreateCubes(roomModel)
+	-- self:CreatePyramid(contentModel, roomModel)	
+	-- self:CreatePortalBetweenRooms(roomModel)
+	self:CreateSignalsField(contentModel, roomModel)
+	-- self:CreateCubes(roomModel)
 end
 
 function Stage:CreatePortalBetweenRooms(roomModel)
@@ -312,7 +369,7 @@ function Stage:SpawnRoom()
 		wallHeight = 40,
 	}
 
-	self:CreateRoom(properties, roomModel)
+	self:CreateRoom(properties, roomModel, self.Level == 2 and false)
 	self:CreateRoomContent(roomModel)
 
 	return roomModel
