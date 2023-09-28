@@ -297,23 +297,43 @@ function Stage:CreateSignalsField(contentModel, roomModel)
         return nodes
     end
 	
+
+	local function createCorridor(upPart, bottomPart)
+		-- local corridorLength = 50
+
+		local nodes = nodes(upPart.Size.X / 2, upPart.Position.Y - 5)
+
+		for _, node in pairs(nodes) do
+			local pos = Vector3.new(table.unpack(node)) + Vector3.new(upPart.Position.X, 0, upPart.Position.Z)
+			local size = Vector3.new(
+				node[3] == 0 and 1 or upPart.Size.X,
+				math.abs(node[2]),
+				node[1] == 0 and 1 or upPart.Size.Z
+			)
+			local part = createPart(pos,size, upPart.Parent)
+		end
+	end
+
 	for i, node in pairs(createNodes()) do
-		local isSignalPart = node[1] % 2 == 0 and node[1] < value and node[3] % 2 == 0 and node[3] < value --(i > value and i < value ^ 2) and i % 2 == 0
+		local isSignalPart = (node[1] % 2 == 0 and node[1] and node[3] % 2 == 0 and node[3]) and math.random(2) == 1 --(i > value and i < value ^ 2) and i % 2 == 0 
+		-- в сигнал парт еще добавить рандом, который будет зависеть от 0 и 1 нужных для того чтобы написать послание и парт либо будет сигналом либо нет
 		local size = Vector3.new(5,1,5)
-		local pos = (startVector - Vector3.new(size.X / 2, 0, size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на этот вектор
-		Vector3.new(size.X, 0, size.Z)) + 
-		Vector3.new(
-			0,
-			isSignalPart and -10 or 0,
-			0
-		)
+		local pos = (startVector - Vector3.new(size.X / 2, 0, size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на start вектор
+		Vector3.new(size.X, 0, size.Z)) 
+		-- Vector3.new(
+		-- 	0,
+		-- 	isSignalPart and -10 or 0,
+		-- 	0
+		-- )
 		local part = createPart(pos, size, fieldModel)
 		part.Color = Color3.new(0,1,1)
 		if isSignalPart then 
 			local singalPart = part:Clone()
 			singalPart.Parent = part.Parent
+			singalPart.Position = part.Position - Vector3.new(0,10,0)
 			singalPart.Material, singalPart.Color = Enum.Material.Neon, Color3.new(1,1,1)
 			part.Transparency = 1
+			createCorridor(part, singalPart)
 		end
 	end
 
