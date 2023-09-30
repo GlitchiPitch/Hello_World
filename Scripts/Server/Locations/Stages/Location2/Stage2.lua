@@ -36,24 +36,24 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses, event)
+function Stage.Create(game_, map, resourses, ...)
 	local self = setmetatable({}, Stage)
 
 	self.Game = game_
 	self.Map = map
 	self.Resourses = resourses
 	self.IsReady = false
-	self.Event = event
+	self.Events = self.Game.Events
 	self.Room = nil
 
-	print(self.Event)
+	
 	self.Signals = {}
 	self.SignalList = {
-		Long = {},
-		Short = {},
+		LongColor = Color3.new(0,0,0),
+		ShortColor = Color3.new(0,0,0),
 	}
 
-	self.Level = 2
+	self.Level = 1
 
 	self.PlayerSpawnPoint = nil
 	self:Init()
@@ -63,14 +63,32 @@ end
 
 function Stage:Init()
 	self:CreatePort()
-	self:CreateSignalFolders()
+	self:CreateSignalVars()
+	self:SubscribeEvents()
 	print("Stage 2 init")
 
-	repeat
-		wait()
-	until self.IsReady
+	repeat wait() until self.IsReady
 	print(" Stage 2 is ready")
 	self:FinishAction()
+end
+
+function Stage:SubscribeEvents()
+
+	self.Events.Remotes.Interact.OnServerEvent:Connect(function(player, role, ...)
+		if role == 'door' then
+			if self.SignalList.LongColor == Color3.new(0,0,0) and self.SignalList.ShortColor == Color3.new(0,0,0) then return end
+			self.SignalList.LongColor = self.Signals[1].Color self.SignalList.ShortColor = self.Signals[2].Color
+			self.Level += 1
+			self.Room:Destroy()
+			self.Room = self:SpawnRoom()
+			self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
+		elseif role == 'signal' then
+			local signal = ...
+			signal.BrickColor = BrickColor.random()
+			if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.BrickColor else self.SignalList.LongColor = signal.BrickColor end
+		end
+
+	end)
 end
 
 function Stage:FinishAction()
@@ -83,82 +101,49 @@ function Stage:FinishAction()
 	-- delete signals
 end
 
-function Stage:CreateSignalFolders()
-	self.ShortSignalFolder, self.LongSignalFolder = Instance.new("Folder"), Instance.new("Folder")
-	self.ShortSignalFolder.Parent, self.LongSignalFolder.Parent = ServerStorage, ServerStorage
-	self.ShortSignalFolder.Name, self.LongSignalFolder.Name = "ShortSignal", "LongSignal"
+function Stage:CreateSignalVars()
+	self.ShortSignal, self.LongSignal = Instance.new('Color3Value'), Instance.new("Color3Value")
+	self.LongSignal.Parent, self.LongSignal.Parent = ServerStorage, ServerStorage
+	self.LongSignal.Name, self.LongSignal.Name = "ShortSignal", "LongSignal"
 end
 
-function Stage:SetupSignals(particle, bit)
+function Stage:SetupSignals(signal, byte)
 	local lengthOfFlash = 2
 	local tInfo = TweenInfo.new(
-		bit == 0 and lengthOfFlash / 2 or lengthOfFlash,
+		byte == 0 and lengthOfFlash / 2 or lengthOfFlash,
 		Enum.EasingStyle.Linear,
 		Enum.EasingDirection.InOut,
 		-1,
 		true
 	)
-	TweenService:Create(particle, tInfo, { ImageTransparency = 1 }):Play()
+	TweenService:Create(signal, tInfo, { Transparency = 1 }):Play()
+	CollectionService:AddTag(signal, 'Interact')
+	signal:SetAttribute('Role', 'signal')
+	signal:SetAttribute('Byte', byte)
 end
 
-function Stage:SetupSignalPlatform(signalPlatform, bit)
-	local signalPlatformType = bit == 0 and self.SignalList.Short or self.SignalList.Long
-	signalPlatform.touchedPart.Touched:Connect(function(hitPart)
-		if game:GetService("CollectionService"):HasTag(hitPart, "Interact") then
-			table.insert(signalPlatformType, hitPart)
-		end
-	end)
 
-	signalPlatform.touchedPart.TouchEnded:Connect(function(hitPart)
-		if table.find(signalPlatformType, hitPart, 1) and game:GetService("CollectionService"):HasTag(hitPart, "Interact") then
-			table.remove(signalPlatformType, table.find(signalPlatformType, hitPart, 1))
-		end
-	end)
-end
 
-function Stage:CreateSingals(p1, p2)
-
+function Stage:CreateSingals(positions, roomModel, bytes)
+	local signalFolder = Instance.new('Folder')
+	signalFolder.Parent = roomModel
 	-- they are different in the different level
-	-- на первом уровне они получают кубики и создают потом папку, на след уровне они должны проверять что кубки им положили правильные 
 	-- вторую комнату будет прикольно сделать с дырками в полу, которые будут определять каждую букву и когда игрок будет туда кидать нужные кубики, то кубик затухает 
 	-- и в чате пишется буква 
 	-- в следующих комнатах сигналы будут вглядеть как платформы на глубине с неоновым светом и туда надо кидать кубики
-
-	local l = { p1.Position, p2.Position }
-
-	for i, pos in pairs(l) do
-		local model = Instance.new("Model")
-		model.Parent = workspace
-
-		local part = Instance.new("Part")
-		part.Parent = model
-		part.Size = Vector3.new(1, 1, 1)
-		part.Transparency = 1
-		part.CanCollide, part.CanQuery, part.CanTouch = false, false, false
-		part.Anchored = true
-		part.Position = pos + Vector3.new(0,11,0)
-
-		local gui = Instance.new("BillboardGui")
-		gui.Size = UDim2.fromScale(4, 4)
-		gui.Parent = part
-
-		local particle = Instance.new("ImageLabel")
-		particle.BackgroundTransparency = 1
-		particle.Image = "rbxassetid://11815755770"
-		particle.Size = UDim2.fromScale(1, 1)
-		particle.Parent = gui
-		self:SetupSignals(particle, (i - 1))
-
-		local signalPlatform = self.Resourses.Items:FindFirstChild("SignalPlatform"):Clone()
-		signalPlatform.Parent = model
-		signalPlatform:PivotTo(CFrame.new(part.CFrame.Position - Vector3.new(0, 5, 0)) * signalPlatform:GetPivot().Rotation)
-		self:SetupSignalPlatform(signalPlatform, (i - 1))
-
-		table.insert(self.Signals, model)
+	local size = Vector3.new(5,5,5)
+	
+	for i = 1, #bytes do
+		local signalPart = createPart(positions[i], size, signalFolder)
+		signalPart.BrickColor = BrickColor.White()
+		signalPart.Material = Enum.Material.Neon
+		self:SetupSignals(signalPart, bytes[i])
+		table.insert(self.Signals, signalPart)
 	end
+
 end
 
-function Stage:CreateRoom(properties, roomModel, existFloor)
+function Stage:CreateRoom(properties, roomModel)
 	local value = properties.wallsPositionValue
 		local y = 10
 		local wallHeight = properties.wallHeight
@@ -170,7 +155,7 @@ function Stage:CreateRoom(properties, roomModel, existFloor)
 
 		local multiplyValue = 2
 
-		for i = 1, not existFloor and 5 or 6 do
+		for i = 1, 6 do
 			if nodesPositions[i] then
 				local sidePosition = Vector3.new(table.unpack(nodesPositions[i]))
 
@@ -272,8 +257,8 @@ function Stage:CreatePyramid(contentModel, roomModel)
 			roomPivot.Z
 		)
 	)
-
-	self:CreateSingals(pyramid1:GetPivot(), pyramid2:GetPivot())
+	
+	self:CreateSingals({pyramid1:GetPivot().Position + Vector3.new(0,size.Y, 0), pyramid2:GetPivot().Position + Vector3.new(0,size.Y, 0)}, roomModel, {1, 0})
 end
 
 function Stage:CreateSignalsField(contentModel, roomModel)
@@ -286,9 +271,6 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	local fieldModel = Instance.new('Model')
 	fieldModel.Parent = contentModel
 
-	print(math.floor(sizeRoom.X / 8))
-	print(math.floor(sizeRoom.Z / 8))
-
 	local function createNodes()
         local nodes = {}
         for x = 1, math.floor(sizeRoom.X / 4) - 5 do
@@ -299,54 +281,25 @@ function Stage:CreateSignalsField(contentModel, roomModel)
         return nodes
     end
 	
-
-	local function createCorridor(upPart, bottomPart)
-
-		local nodes = nodes(upPart.Size.X / 2, upPart.Position.Y - 5)
-
-		for _, node in pairs(nodes) do
-			local pos = Vector3.new(table.unpack(node)) + Vector3.new(upPart.Position.X, 0, upPart.Position.Z)
-			local size = Vector3.new(
-				node[3] == 0 and 1 or upPart.Size.X,
-				math.abs(node[2]),
-				node[1] == 0 and 1 or upPart.Size.Z
-			)
-			local part = createPart(pos,size, upPart.Parent)
-		end
-	end
-
+	local nodesForSignals = {}
 	for i, node in pairs(createNodes()) do
-		local isSignalPart = (node[1] % 2 == 0 and node[1] and node[3] % 2 == 0 and node[3]) and math.random(2) == 1 --(i > value and i < value ^ 2) and i % 2 == 0 
 		-- в сигнал парт еще добавить рандом, который будет зависеть от 0 и 1 нужных для того чтобы написать послание и парт либо будет сигналом либо нет
 		local size = Vector3.new(5,1,5)
 		local pos = (startVector - Vector3.new(size.X / 2, 0, size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на start вектор
-		Vector3.new(size.X, 0, size.Z)) 
-
-		local part = createPart(pos, size, fieldModel)
-		part.Color = Color3.new(0,1,1)
-		if isSignalPart then 
-			local singalPart = part:Clone()
-			singalPart.Parent = part.Parent
-			singalPart.Position = part.Position - Vector3.new(0,10,0)
-			singalPart.Material, singalPart.Color = Enum.Material.Neon, Color3.new(1,1,1)
-			part.Transparency = 1
-			createCorridor(part, singalPart)
-			-- self:SetupSignalPlatform(singalPart, )
+		Vector3.new(size.X, 10, size.Z)) 
+		if (node[1] % 2 == 0 and node[1] and node[3] % 2 == 0 and node[3]) and math.random(2) == 1 then
+			table.insert(nodesForSignals, pos)
 		end
 	end
-
+	
+	self:CreateSingals(nodesForSignals, roomModel, {1,1,1,0,0,0})
 end
 
 function Stage:CreateRoomContent(roomModel)
 	local contentModel = Instance.new("Model")
 	contentModel.Parent = roomModel
-
-		-- надо получать разное количество граней у горок, разные позицию для них и разное количество
-
-	-- self:CreatePyramid(contentModel, roomModel)	
-	-- self:CreatePortalBetweenRooms(roomModel)
-	self:CreateSignalsField(contentModel, roomModel)
-	-- self:CreateCubes(roomModel)
+	if self.Level == 1 then self:CreatePyramid(contentModel, roomModel) else self:CreateSignalsField(contentModel, roomModel) end
+	self:CreatePortalBetweenRooms(roomModel)
 end
 
 function Stage:CreatePortalBetweenRooms(roomModel)
@@ -358,36 +311,21 @@ function Stage:CreatePortalBetweenRooms(roomModel)
 	door.Color = Color3.new(1,1,0)
 	door.Material = Enum.Material.Neon
 
-	door.Touched:Connect(function(hitPart)
-		if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
-		if #self.LongSignalFolder == 0 or #self.ShortSignalFolder == 0 then return end
-		-- положить в папки в сторадж кубики и удалить предыдущие комнату
-	end)
-end
-
-function Stage:CreateCubes(roomModel)
-	local roomPivot = roomModel:GetPivot()
-	local IceCubesFolder = Instance.new('Folder')
-	IceCubesFolder.Parent = roomModel
-	for i = 1, math.random(10, 20) do
-		local cube = createPart(roomPivot.Position + Vector3.new(math.random(-roomPivot.Position.X / 4, roomPivot.Position.X / 4), 0, math.random(-roomPivot.Position.Z / 4, roomPivot.Position.Z / 4)), Vector3.new(1,1,1), IceCubesFolder)
-		cube.Anchored = false
-		cube.BrickColor = BrickColor.random()
-		CollectionService:AddTag(cube, 'Interact')
-		-- wait(2)
-	end
+	CollectionService:AddTag(door, 'Interact')
+	door:SetAttribute('Role', 'door')
 end
 
 function Stage:SpawnRoom()
 	local roomModel = Instance.new("Model")
 	roomModel.Parent = workspace
 
+	-- размеры будут зависеть от уровня
 	local properties = {
 		wallsPositionValue = 50,
 		wallHeight = 40,
 	}
 
-	self:CreateRoom(properties, roomModel, self.Level == 2 and false)
+	self:CreateRoom(properties, roomModel)
 	self:CreateRoomContent(roomModel)
 
 	return roomModel
@@ -409,20 +347,21 @@ function Stage:CreatePort()
 		end
 		
 		self.Room = self:SpawnRoom()
+		self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
 		portModel:Destroy()
 	end)
 
-	local finishTrigger = Instance.new("Part")
-	finishTrigger.Parent = workspace
-	finishTrigger.Position = Vector3.new(0, 5, 0)
-	finishTrigger.Color = Color3.new(1, 0, 1)
-	finishTrigger.Size = Vector3.new(10, 10, 10)
+	-- local finishTrigger = Instance.new("Part")
+	-- finishTrigger.Parent = workspace
+	-- finishTrigger.Position = Vector3.new(0, 5, 0)
+	-- finishTrigger.Color = Color3.new(1, 0, 1)
+	-- finishTrigger.Size = Vector3.new(10, 10, 10)
 
-	finishTrigger.Touched:Connect(function(hitPart)
-		if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
-		self.IsReady = true
-		finishTrigger:Destroy()
-	end)
+	-- finishTrigger.Touched:Connect(function(hitPart)
+	-- 	if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
+	-- 	self.IsReady = true
+	-- 	finishTrigger:Destroy()
+	-- end)
 end
 
 return Stage
