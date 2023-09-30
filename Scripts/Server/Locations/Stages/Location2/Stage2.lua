@@ -76,16 +76,45 @@ function Stage:SubscribeEvents()
 
 	self.Events.Remotes.Interact.OnServerEvent:Connect(function(player, role, ...)
 		if role == 'door' then
-			if self.SignalList.LongColor == Color3.new(0,0,0) and self.SignalList.ShortColor == Color3.new(0,0,0) then return end
-			self.SignalList.LongColor = self.Signals[1].Color self.SignalList.ShortColor = self.Signals[2].Color
-			self.Level += 1
-			self.Room:Destroy()
-			self.Room = self:SpawnRoom()
-			self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
+			if self.Level == 1 then
+				print('level 1')
+				if self.SignalList.LongColor == Color3.new(0,0,0) and self.SignalList.ShortColor == Color3.new(0,0,0) then return end
+				print('level 1 is ok')
+				self.SignalList.LongColor = self.Signals[1].Color self.SignalList.ShortColor = self.Signals[2].Color
+				self.Level += 1
+				table.clear(self.Signals)
+				self.Room:Destroy()
+				self.Room = self:SpawnRoom()
+				self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
+			else
+				print('level 2')
+				print(self.Signals)
+				for _, signalPart in pairs(self.Signals) do
+					print(signalPart.Color, signalPart:GetAttribute('Byte'))
+					print(self.SignalList)
+					if signalPart.Color == self.SignalList.LongColor and signalPart:GetAttribute('Byte') == 1 or 
+					signalPart.Color == self.SignalList.ShortColor and signalPart:GetAttribute('Byte') == 0 then 
+						continue
+					else 
+						print('not good')
+						return	
+					end
+				end
+				print('good')
+				self.Level += 1
+				self.Room:Destroy()
+				table.clear(self.Signals)
+				self.Room = self:SpawnRoom()
+				self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
+			end
+			
 		elseif role == 'signal' then
+
+			local colors = {Color3.new(1,0,0), Color3.new(0,1,0)}
+
 			local signal = ...
-			signal.BrickColor = BrickColor.random()
-			if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.BrickColor else self.SignalList.LongColor = signal.BrickColor end
+			signal.Color = signal.BrickColor == BrickColor.White() and colors[math.random(#colors)] or signal.Color == colors[1] and colors[2] or colors[1]
+			if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.Color else self.SignalList.LongColor = signal.Color end
 		end
 
 	end)
@@ -119,7 +148,7 @@ function Stage:SetupSignals(signal, byte)
 	TweenService:Create(signal, tInfo, { Transparency = 1 }):Play()
 	CollectionService:AddTag(signal, 'Interact')
 	signal:SetAttribute('Role', 'signal')
-	signal:SetAttribute('Byte', byte)
+	if self.Level > 1 then signal:SetAttribute('Byte', byte) end
 end
 
 
@@ -140,7 +169,7 @@ function Stage:CreateSingals(positions, roomModel, bytes)
 		self:SetupSignals(signalPart, bytes[i])
 		table.insert(self.Signals, signalPart)
 	end
-
+	print(self.Signals)
 end
 
 function Stage:CreateRoom(properties, roomModel)
