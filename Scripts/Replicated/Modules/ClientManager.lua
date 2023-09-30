@@ -1,3 +1,4 @@
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -171,12 +172,22 @@ end
 
 function ClientManager.SetupMouseBehaviour(player)
     local mouse = player:GetMouse()
-    -- mouse.Move:Connect(function()
-    
+    local interactLabel = player.PlayerGui:FindFirstChild('MainGui'):FindFirstChild('interactLabel')
+    mouse.Move:Connect(function()
+        local target = mouse.Target
+        if target and CollectionService:HasTag(target, 'Interact') and (mouse.Origin.Position - target.Position).Magnitude < 10 then
+            local x, y = mouse.X / mouse.ViewSizeX, mouse.Y / mouse.ViewSizeY
+            interactLabel.Visible = true
+            interactLabel.Position = UDim2.fromScale(x, y + .1)
+        else
+            interactLabel.Visible = false
+        end
+    end)
     
     mouse.Button1Down:Connect(function()
         local target = mouse.Target
-        if target and game:GetService('CollectionService'):HasTag(target, 'Interact') then
+        if target and game:GetService('CollectionService'):HasTag(target, 'Interact') and (mouse.Origin.Position - target.Position).Magnitude < 10 then
+            print('client fire')
             Events.Remotes.Interact:FireServer(target:GetAttribute('Role'), target)
         end
     end)
@@ -190,6 +201,16 @@ function ClientManager.SetupStartMenu(player)
         Events.Remotes.StartGame:FireServer()
         MainGui.Background:Destroy()
     end)
+
+    local interactLabel = Instance.new('TextLabel')
+    interactLabel.Name = 'interactLabel'
+    interactLabel.AnchorPoint = Vector2.new(.5, 0)
+    interactLabel.Parent = MainGui
+    interactLabel.Size = UDim2.fromScale(.1,.05)
+    interactLabel.BackgroundTransparency = 1
+    interactLabel.TextColor3 = Color3.new(1,1,1)
+    interactLabel.TextStrokeTransparency = 0
+    interactLabel.Visible = false
 end
 
 
