@@ -23,6 +23,8 @@ local function nodes(value, y)
 end
 
 
+local KEY_IN_2BIT = '0100100001100101011011000110110001101111010010010100000101101101010000010111000001101111011011000110110001101111'
+
 local Stage = {}
 
 -- этот этап переходный между локациями, после его прохождения игрок попадает на след локацию
@@ -299,7 +301,6 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	
 
 	local function createCorridor(upPart, bottomPart)
-		-- local corridorLength = 50
 
 		local nodes = nodes(upPart.Size.X / 2, upPart.Position.Y - 5)
 
@@ -320,11 +321,7 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 		local size = Vector3.new(5,1,5)
 		local pos = (startVector - Vector3.new(size.X / 2, 0, size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на start вектор
 		Vector3.new(size.X, 0, size.Z)) 
-		-- Vector3.new(
-		-- 	0,
-		-- 	isSignalPart and -10 or 0,
-		-- 	0
-		-- )
+
 		local part = createPart(pos, size, fieldModel)
 		part.Color = Color3.new(0,1,1)
 		if isSignalPart then 
@@ -334,6 +331,7 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 			singalPart.Material, singalPart.Color = Enum.Material.Neon, Color3.new(1,1,1)
 			part.Transparency = 1
 			createCorridor(part, singalPart)
+			-- self:SetupSignalPlatform(singalPart, )
 		end
 	end
 

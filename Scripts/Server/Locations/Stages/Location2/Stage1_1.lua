@@ -94,7 +94,6 @@ function Stage:CalculateColor(prevColor, color)
         (color.B == 1 and prevColor.B + (prevColor.B < 1 and value or -value)) or 
         (value < 0 and (prevColor.B > 0 and prevColor.B + value) or prevColor.B)
     )
-
     self.RoomColor = nextColor
     return nextColor
 end
