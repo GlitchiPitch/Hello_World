@@ -115,7 +115,16 @@ function Stage:SubscribeEvents()
 			local colors = {Color3.new(1,0,0), Color3.new(0,1,0)}
 
 			local signal = ...
-			signal.Color = signal.BrickColor == BrickColor.White() and colors[math.random(#colors)] or signal.Color == colors[1] and colors[2] or colors[1]
+			-- signal.Color = signal.BrickColor == BrickColor.White() and colors[math.random(#colors)] or signal.Color == colors[1] and colors[2] or colors[1]
+			-- поиск цвета и поиск в таблице следующег цвета, если цвет не нашелся то ханово запускаем поиск
+			local clrs = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(0,1,0), Color3.new(1,0,1)}
+			-- print(table.find(clrs, {table.pack(signal.Color)[1]}, 1))
+			-- print({table.pack(signal.Color)[1]})
+			-- print(table.find(clrs, signal.Color, 1))
+			local nextIndex = table.find(clrs, signal.Color, 1) and table.find(clrs, signal.Color, 1) + 1 or 1
+			print(nextIndex)
+
+			signal.Color = signal.BrickColor == BrickColor.White() and clrs[1] or clrs[nextIndex] ~= nil and clrs[nextIndex] or clrs[1]
 			if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.Color else self.SignalList.LongColor = signal.Color end
 		end
 
