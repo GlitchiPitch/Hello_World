@@ -22,8 +22,21 @@ local function nodes(value, y)
 	return nodesPositions
 end
 
+local binaryCode = {}
+local code = '100010011000111011100001111110011001111'
+for char in code:gmatch(".") do
+	table.insert(binaryCode, char)
+ end	
 
-local KEY_IN_2BIT = '0100100001100101011011000110110001101111010010010100000101101101010000010111000001101111011011000110110001101111'
+local binaryToLetter = {
+	['1'] = 'A',
+	['1000'] = 'H',
+	['1001'] = 'I',
+	['1101'] = 'M',
+	['10000'] = 'P',
+	['1111'] = 'O',
+	['1100'] = 'L'
+}
 
 local Stage = {}
 
@@ -46,7 +59,6 @@ function Stage.Create(game_, map, resourses, ...)
 	self.Events = self.Game.Events
 	self.Room = nil
 
-	
 	self.Signals = {}
 	self.SignalList = {
 		LongColor = Color3.new(0,0,0),
@@ -66,7 +78,6 @@ function Stage:Init()
 	self:CreateSignalVars()
 	self:SubscribeEvents()
 	print("Stage 2 init")
-
 	repeat wait() until self.IsReady
 	print(" Stage 2 is ready")
 	self:FinishAction()
@@ -77,9 +88,7 @@ function Stage:SubscribeEvents()
 	self.Events.Remotes.Interact.OnServerEvent:Connect(function(player, role, ...)
 		if role == 'door' then
 			if self.Level == 1 then
-				print('level 1')
 				if self.SignalList.LongColor == Color3.new(0,0,0) and self.SignalList.ShortColor == Color3.new(0,0,0) then return end
-				print('level 1 is ok')
 				self.SignalList.LongColor = self.Signals[1].Color self.SignalList.ShortColor = self.Signals[2].Color
 				self.Level += 1
 				table.clear(self.Signals)
@@ -87,25 +96,18 @@ function Stage:SubscribeEvents()
 				self.Room = self:SpawnRoom()
 				self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
 			else
-				print('level 2')
-				print(self.Signals)
 				for _, signalPart in pairs(self.Signals) do
-					print(signalPart.Color, signalPart:GetAttribute('Byte'))
-					print(self.SignalList)
 					if signalPart.Color == self.SignalList.LongColor and signalPart:GetAttribute('Byte') == 1 or 
 					signalPart.Color == self.SignalList.ShortColor and signalPart:GetAttribute('Byte') == 0 then 
 						continue
 					else 
-						print('not good')
 						return	
 					end
 				end
-				print('good')
-				self.Level += 1
 				self.Room:Destroy()
 				table.clear(self.Signals)
-				self.Room = self:SpawnRoom()
-				self.Game.Player.Character:MoveTo(self.Room:GetPivot().Position)
+				-- self.Room = self:SpawnRoom()
+				self.Game.Player.Character:MoveTo(Vector3.new(0,100,0))
 			end
 			
 		elseif role == 'signal' then
@@ -153,14 +155,15 @@ end
 
 
 
-function Stage:CreateSingals(positions, roomModel, bytes)
+function Stage:CreateSingals(positions, roomModel, bytes, size)
+
 	local signalFolder = Instance.new('Folder')
 	signalFolder.Parent = roomModel
 	-- they are different in the different level
 	-- вторую комнату будет прикольно сделать с дырками в полу, которые будут определять каждую букву и когда игрок будет туда кидать нужные кубики, то кубик затухает 
 	-- и в чате пишется буква 
 	-- в следующих комнатах сигналы будут вглядеть как платформы на глубине с неоновым светом и туда надо кидать кубики
-	local size = Vector3.new(5,5,5)
+	-- local size = Vector3.new(5,5,5)
 	
 	for i = 1, #bytes do
 		local signalPart = createPart(positions[i], size, signalFolder)
@@ -169,7 +172,7 @@ function Stage:CreateSingals(positions, roomModel, bytes)
 		self:SetupSignals(signalPart, bytes[i])
 		table.insert(self.Signals, signalPart)
 	end
-	print(self.Signals)
+	-- print(self.Signals)
 end
 
 function Stage:CreateRoom(properties, roomModel)
@@ -287,12 +290,11 @@ function Stage:CreatePyramid(contentModel, roomModel)
 		)
 	)
 	
-	self:CreateSingals({pyramid1:GetPivot().Position + Vector3.new(0,size.Y, 0), pyramid2:GetPivot().Position + Vector3.new(0,size.Y, 0)}, roomModel, {1, 0})
+	self:CreateSingals({pyramid1:GetPivot().Position + Vector3.new(0,size.Y, 0), pyramid2:GetPivot().Position + Vector3.new(0,size.Y, 0)}, roomModel, {1, 0}, Vector3.new(5,5,5))
 end
 
 function Stage:CreateSignalsField(contentModel, roomModel)
 
-	local value = 11
 	local startVector = roomModel:GetPivot().Position
 	local _, sizeRoom = roomModel:GetBoundingBox()
 	startVector = Vector3.new(startVector.X - sizeRoom.X / 2, startVector.Y - sizeRoom.Y / 2, startVector.Z - sizeRoom.Z / 2)
@@ -303,8 +305,8 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	local function createNodes()
         local nodes = {}
         for x = 1, math.floor(sizeRoom.X / 4) - 5 do
-            for z = 1, math.floor(sizeRoom.Z / 4) - 2 do 
-                    table.insert(nodes, {x, 0, z})
+            for z = 1, math.floor(sizeRoom.Z / 4) - 2 do
+                table.insert(nodes, {x, 0, z})
             end
         end
         return nodes
@@ -314,14 +316,14 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	for i, node in pairs(createNodes()) do
 		-- в сигнал парт еще добавить рандом, который будет зависеть от 0 и 1 нужных для того чтобы написать послание и парт либо будет сигналом либо нет
 		local size = Vector3.new(5,1,5)
-		local pos = (startVector - Vector3.new(size.X / 2, 0, size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на start вектор
-		Vector3.new(size.X, 10, size.Z)) 
-		if (node[1] % 2 == 0 and node[1] and node[3] % 2 == 0 and node[3]) and math.random(2) == 1 then
+		local pos = (startVector + Vector3.new(-size.X / 2, 10, -size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на start вектор
+		Vector3.new(size.X, 0, size.Z))
+		if node[1] % 2 == 0 and node[1] and node[3] % 2 == 0 and node[3] then -- and math.random(2) == 1 
 			table.insert(nodesForSignals, pos)
 		end
 	end
 	
-	self:CreateSingals(nodesForSignals, roomModel, {1,1,1,0,0,0})
+	self:CreateSingals(nodesForSignals, roomModel, binaryCode, Vector3.new(1,1,1))
 end
 
 function Stage:CreateRoomContent(roomModel)
