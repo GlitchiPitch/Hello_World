@@ -122,17 +122,26 @@ function Stage:SubscribeEvents()
 				if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.Color else self.SignalList.LongColor = signal.Color end
 			else
 				local letterFolder = signal.Parent
+				local binaryLetterIndex = ''
 				for i, item in pairs(letterFolder:GetChildren()) do
 					if item:GetAttribute('Byte') == 1 and item.Color == self.SignalList.LongColor or item:GetAttribute('Byte') == 0 and item.Color == self.SignalList.ShortColor then
+						binaryLetterIndex = binaryLetterIndex .. item:GetAttribute('Byte')
 						continue
 					else
 						print('wrong')
 						return
 					end
 				end
+
+				local function GetLetter()
+					for i, letter in pairs(binaryToLetter) do
+						if i == binaryLetterIndex then return letter end
+					end
+				end
+
 				print('send remote')
 				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'coreGui', Enum.CoreGuiType.Chat, true)
-				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'sendChatMessage', 'Hahahaha')
+				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'sendChatMessage', GetLetter())
 			end
 		end
 
@@ -156,19 +165,21 @@ function Stage:CreateSignalVars()
 end
 
 function Stage:SetupSignals(signal, byte)
-	print(byte)
-	local lengthOfFlash = 10
+	print(typeof(byte))
+	local lengthOfFlash = byte == 0 and 10 or 1
 	local tInfo = TweenInfo.new(
-		byte == 0 and lengthOfFlash / 10 or lengthOfFlash,
+		lengthOfFlash,
 		Enum.EasingStyle.Linear,
 		Enum.EasingDirection.InOut,
 		-1,
 		true
 	)
-	TweenService:Create(signal, tInfo, { Transparency = 1 }):Play()
+	local tween = TweenService:Create(signal, tInfo, { Transparency = 1 })
+	print(tInfo)
+	tween:Play()
 	CollectionService:AddTag(signal, 'Interact')
 	signal:SetAttribute('Role', 'signal')
-	if self.Level > 1 then signal:SetAttribute('Byte', byte) signal.Color = byte == 0 and Color3.new(1,0,0) or Color3.new(0,1,0) end
+	if self.Level > 1 then signal:SetAttribute('Byte', byte) end
 end
 
 
@@ -349,7 +360,7 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	for i, char in pairs(binaryCode) do
 		if tonumber(char) then
 			table.insert(currentNodes, nodes[i])
-			table.insert(currentLetter, char)
+			table.insert(currentLetter, tonumber(char))
 		else
 			table.insert(binaryCodeField, {currentNodes, currentLetter})
 			currentLetter, currentNodes = {}, {}
