@@ -105,6 +105,7 @@ function Stage:SubscribeEvents()
 						return	
 					end
 				end
+
 				self.Room:Destroy()
 				table.clear(self.Signals)
 				-- self.Room = self:SpawnRoom()
@@ -128,7 +129,6 @@ function Stage:SubscribeEvents()
 						binaryLetterIndex = binaryLetterIndex .. item:GetAttribute('Byte')
 						continue
 					else
-						print('wrong')
 						return
 					end
 				end
@@ -139,7 +139,6 @@ function Stage:SubscribeEvents()
 					end
 				end
 
-				print('send remote')
 				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'coreGui', Enum.CoreGuiType.Chat, true)
 				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'sendChatMessage', GetLetter())
 			end
@@ -165,7 +164,6 @@ function Stage:CreateSignalVars()
 end
 
 function Stage:SetupSignals(signal, byte)
-	print(typeof(byte))
 	local lengthOfFlash = byte == 0 and 10 or 1
 	local tInfo = TweenInfo.new(
 		lengthOfFlash,
@@ -175,7 +173,6 @@ function Stage:SetupSignals(signal, byte)
 		true
 	)
 	local tween = TweenService:Create(signal, tInfo, { Transparency = 1 })
-	print(tInfo)
 	tween:Play()
 	CollectionService:AddTag(signal, 'Interact')
 	signal:SetAttribute('Role', 'signal')
@@ -198,6 +195,7 @@ function Stage:CreateSingals(positions, roomModel, bytes, size)
 	for i = 1, #positions do
 		local signalPart = createPart(positions[i], size, signalFolder)
 		signalPart.BrickColor = BrickColor.White()
+		signalPart.Name = tostring(positions[i].X) .. tostring(positions[i].Z)
 		signalPart.Material = Enum.Material.Neon
 		self:SetupSignals(signalPart, bytes[i])
 		table.insert(self.Signals, signalPart)
@@ -328,7 +326,7 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 
 	local startVector = roomModel:GetPivot().Position
 	local _, sizeRoom = roomModel:GetBoundingBox()
-	startVector = Vector3.new(startVector.X - sizeRoom.X / 2, startVector.Y - sizeRoom.Y / 2, startVector.Z - sizeRoom.Z / 2)
+	startVector = Vector3.new(startVector.X - sizeRoom.X / 2, startVector.Y - sizeRoom.Y / 2, startVector.Z + sizeRoom.Z / 2)
 
 	local fieldModel = Instance.new('Model')
 	fieldModel.Parent = contentModel
@@ -336,9 +334,11 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	local function createNodes()
         local nodes = {}
         for x = 1, math.floor(sizeRoom.X / 4) - 5 do
-            for z = 1, math.floor(sizeRoom.Z / 4) - 2 do
-                table.insert(nodes, {x, 0, z})
-            end
+            -- for z = 1, math.floor(sizeRoom.Z / 4) - 2 do
+			for y = 0, 1 do
+				table.insert(nodes, {x, y * 5, 1})
+			end
+            -- end
         end
         return nodes
     end
@@ -348,15 +348,16 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 
 	for i, node in pairs(createNodes()) do
 		local size = Vector3.new(5, 1, 5)
-		local pos = (startVector + Vector3.new(-size.X / 2, 10, -size.Z / 2)) + (Vector3.new(table.unpack(node)) * size)
-		if node[3] % 2 == 1 then
-			table.insert(nodes, pos)
-			-- table.insert(binaryCodeField, node[2])
-		end
+		local pos = (startVector + Vector3.new(-2.5, 5, -10)) + (Vector3.new(table.unpack(node)) * size)
+		-- if node[3] % 2 == 0 then
+		table.insert(nodes, pos)
+		-- table.insert(binaryCodeField, 0)
+		-- end
 	end
 
 	local currentLetter = {}
 	local currentNodes = {}
+	local lastIteration
 	for i, char in pairs(binaryCode) do
 		if tonumber(char) then
 			table.insert(currentNodes, nodes[i])
@@ -371,6 +372,7 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 		self:CreateSingals(binaryCodeField[i][1], roomModel, binaryCodeField[i][2], Vector3.new(1,1,1))
 		-- table.insert(letterList, signalFolder)
 	end
+	-- self:CreateSingals(nodes, roomModel, binaryCodeField, Vector3.new(1,1,1))
 	-- а если разобрать по бинару и позициям все позиции и бинары и собрать их в одну таблицу чтобы потом через цикл протащить креате сигнал
 
 end
