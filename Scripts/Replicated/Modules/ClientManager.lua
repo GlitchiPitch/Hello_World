@@ -3,11 +3,13 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService('StarterGui')
 
 local Modules = ReplicatedStorage:WaitForChild('Modules')
 local Events = require(Modules.Events)
 
 ReplicatedFirst:RemoveDefaultLoadingScreen()
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
 -- local MainGui = ReplicatedFirst:WaitForChild('MainGui')
 -- today make a grab system
@@ -161,8 +163,14 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     end)    
 end)
 
-Events.Remotes.UpdateClient.OnClientEvent:Connect(function(...)
-    print(...)
+Events.Remotes.UpdateClient.OnClientEvent:Connect(function(action, ...)
+    if action == 'coreGui' then
+        local coreGuiElement, state = ...
+        StarterGui:SetCoreGuiEnabled(coreGuiElement, state)
+    elseif action == 'sendChatMessage' then
+        local message = ...
+        StarterGui:SetCore( "ChatMakeSystemMessage",  { Text = message, Color = Color3.new(1,1,1), Font = Enum.Font.Arial, FontSize = Enum.FontSize.Size60 } )
+    end
 end)
 
 function ClientManager.StartGame(player)
@@ -188,6 +196,11 @@ function ClientManager.SetupMouseBehaviour(player)
         local target = mouse.Target
         if target and game:GetService('CollectionService'):HasTag(target, 'Interact') and (mouse.Origin.Position - target.Position).Magnitude < 10 then
             Events.Remotes.Interact:FireServer(target:GetAttribute('Role'), target)
+        -- elseif target and game:GetService('CollectionService'):HasTag(target, 'Interact') and 
+        --                     (mouse.Origin.Position - target.Position).Magnitude < 10 and 
+        --                     game:GetService('CollectionService'):HasTag(target, 'Pickable')
+        -- then
+        --     print('take')
         end
     end)
 
