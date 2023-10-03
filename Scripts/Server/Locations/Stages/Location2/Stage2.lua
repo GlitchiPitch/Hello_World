@@ -23,7 +23,7 @@ local function nodes(value, y)
 end
 
 local binaryCode = {}
-local code = '100010011000111011100001111110011001111'
+local code = '1000.1001.1001.1.1101.1.10000.1111.1100.1100.1111'
 for char in code:gmatch(".") do
 	table.insert(binaryCode, char)
  end	
@@ -89,6 +89,7 @@ function Stage:SubscribeEvents()
 		if role == 'door' then
 			if self.Level == 1 then
 				if self.SignalList.LongColor == Color3.new(0,0,0) and self.SignalList.ShortColor == Color3.new(0,0,0) then return end
+				if self.Signals[1].Color == self.Signals[2].Color then return end
 				self.SignalList.LongColor = self.Signals[1].Color self.SignalList.ShortColor = self.Signals[2].Color
 				self.Level += 1
 				table.clear(self.Signals)
@@ -112,20 +113,27 @@ function Stage:SubscribeEvents()
 			
 		elseif role == 'signal' then
 
-			local colors = {Color3.new(1,0,0), Color3.new(0,1,0)}
-
+			local clrs = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(1,0,1)}
 			local signal = ...
-			-- signal.Color = signal.BrickColor == BrickColor.White() and colors[math.random(#colors)] or signal.Color == colors[1] and colors[2] or colors[1]
-			-- поиск цвета и поиск в таблице следующег цвета, если цвет не нашелся то ханово запускаем поиск
-			local clrs = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(0,1,0), Color3.new(1,0,1)}
-			-- print(table.find(clrs, {table.pack(signal.Color)[1]}, 1))
-			-- print({table.pack(signal.Color)[1]})
-			-- print(table.find(clrs, signal.Color, 1))
 			local nextIndex = table.find(clrs, signal.Color, 1) and table.find(clrs, signal.Color, 1) + 1 or 1
-			print(nextIndex)
-
 			signal.Color = signal.BrickColor == BrickColor.White() and clrs[1] or clrs[nextIndex] ~= nil and clrs[nextIndex] or clrs[1]
-			if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.Color else self.SignalList.LongColor = signal.Color end
+
+			if self.Level == 1 then
+				if signal:GetAttribute('Byte') == 0 then self.SignalList.ShortColor = signal.Color else self.SignalList.LongColor = signal.Color end
+			else
+				local letterFolder = signal.Parent
+				for i, item in pairs(letterFolder:GetChildren()) do
+					if item:GetAttribute('Byte') == 1 and item.Color == self.SignalList.LongColor or item:GetAttribute('Byte') == 0 and item.Color == self.SignalList.ShortColor then
+						continue
+					else
+						print('wrong')
+						return
+					end
+				end
+				print('send remote')
+				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'coreGui', Enum.CoreGuiType.Chat, true)
+				self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'sendChatMessage', 'Hahahaha')
+			end
 		end
 
 	end)
@@ -148,9 +156,10 @@ function Stage:CreateSignalVars()
 end
 
 function Stage:SetupSignals(signal, byte)
-	local lengthOfFlash = 2
+	print(byte)
+	local lengthOfFlash = 10
 	local tInfo = TweenInfo.new(
-		byte == 0 and lengthOfFlash / 2 or lengthOfFlash,
+		byte == 0 and lengthOfFlash / 10 or lengthOfFlash,
 		Enum.EasingStyle.Linear,
 		Enum.EasingDirection.InOut,
 		-1,
@@ -159,7 +168,7 @@ function Stage:SetupSignals(signal, byte)
 	TweenService:Create(signal, tInfo, { Transparency = 1 }):Play()
 	CollectionService:AddTag(signal, 'Interact')
 	signal:SetAttribute('Role', 'signal')
-	if self.Level > 1 then signal:SetAttribute('Byte', byte) end
+	if self.Level > 1 then signal:SetAttribute('Byte', byte) signal.Color = byte == 0 and Color3.new(1,0,0) or Color3.new(0,1,0) end
 end
 
 
@@ -167,21 +176,23 @@ end
 function Stage:CreateSingals(positions, roomModel, bytes, size)
 
 	local signalFolder = Instance.new('Folder')
+	signalFolder.Name = 'SignalFolder'
 	signalFolder.Parent = roomModel
 	-- they are different in the different level
 	-- вторую комнату будет прикольно сделать с дырками в полу, которые будут определять каждую букву и когда игрок будет туда кидать нужные кубики, то кубик затухает 
 	-- и в чате пишется буква 
 	-- в следующих комнатах сигналы будут вглядеть как платформы на глубине с неоновым светом и туда надо кидать кубики
 	-- local size = Vector3.new(5,5,5)
-	
-	for i = 1, #bytes do
+
+	for i = 1, #positions do
 		local signalPart = createPart(positions[i], size, signalFolder)
 		signalPart.BrickColor = BrickColor.White()
 		signalPart.Material = Enum.Material.Neon
 		self:SetupSignals(signalPart, bytes[i])
 		table.insert(self.Signals, signalPart)
 	end
-	-- print(self.Signals)
+
+	-- return signalFolder
 end
 
 function Stage:CreateRoom(properties, roomModel)
@@ -321,18 +332,36 @@ function Stage:CreateSignalsField(contentModel, roomModel)
         return nodes
     end
 	
-	local nodesForSignals = {}
+	local binaryCodeField = {}
+	local nodes = {}
+
 	for i, node in pairs(createNodes()) do
-		-- в сигнал парт еще добавить рандом, который будет зависеть от 0 и 1 нужных для того чтобы написать послание и парт либо будет сигналом либо нет
-		local size = Vector3.new(5,1,5)
-		local pos = (startVector + Vector3.new(-size.X / 2, 10, -size.Z / 2)) + (Vector3.new(table.unpack(node)) * -- очень прикольно получилось умножать на start вектор
-		Vector3.new(size.X, 0, size.Z))
-		if node[1] % 2 == 0 and node[1] and node[3] % 2 == 0 and node[3] then -- and math.random(2) == 1 
-			table.insert(nodesForSignals, pos)
+		local size = Vector3.new(5, 1, 5)
+		local pos = (startVector + Vector3.new(-size.X / 2, 10, -size.Z / 2)) + (Vector3.new(table.unpack(node)) * size)
+		if node[3] % 2 == 1 then
+			table.insert(nodes, pos)
+			-- table.insert(binaryCodeField, node[2])
 		end
 	end
-	
-	self:CreateSingals(nodesForSignals, roomModel, binaryCode, Vector3.new(1,1,1))
+
+	local currentLetter = {}
+	local currentNodes = {}
+	for i, char in pairs(binaryCode) do
+		if tonumber(char) then
+			table.insert(currentNodes, nodes[i])
+			table.insert(currentLetter, char)
+		else
+			table.insert(binaryCodeField, {currentNodes, currentLetter})
+			currentLetter, currentNodes = {}, {}
+		end
+	end
+
+	for i = 1, #binaryCodeField do
+		self:CreateSingals(binaryCodeField[i][1], roomModel, binaryCodeField[i][2], Vector3.new(1,1,1))
+		-- table.insert(letterList, signalFolder)
+	end
+	-- а если разобрать по бинару и позициям все позиции и бинары и собрать их в одну таблицу чтобы потом через цикл протащить креате сигнал
+
 end
 
 function Stage:CreateRoomContent(roomModel)
