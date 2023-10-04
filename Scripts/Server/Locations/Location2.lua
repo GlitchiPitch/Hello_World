@@ -37,7 +37,7 @@ function Location.Create(game_)
     self.StageIndex = 1
     self.IsReady = false
 
-    self.Event = Instance.new('BindableEvent')
+    -- self.Event = Instance.new('BindableEvent')
 
     self:Init()
 

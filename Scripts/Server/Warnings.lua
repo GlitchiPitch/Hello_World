@@ -64,5 +64,8 @@ function Warnings:Warning_1_1()
     self:CreateGui()
 end
 
+function Warnings:Warning_1_2w()
+    
+end
 
 return Warnings

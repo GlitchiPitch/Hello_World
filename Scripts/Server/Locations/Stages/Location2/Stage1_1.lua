@@ -5,7 +5,7 @@ START_COLOR = START_COLOR[math.random(#START_COLOR)]
 -- when room's color will be more equals gray then camera and speed of player will become more claim and slowly and sounds become quietly
 
 -- можно заюзать ближе к выолнению задания выбор рандомного цвета для каждой ячейки и через твин анимировать изменение каждой ячейки с увеличением звука и цвета и света
-
+-- на этом этапе должен быть скример который смажет переход игрока обратно на карту
 
 local Stage = {}
 

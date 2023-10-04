@@ -38,14 +38,11 @@ local binaryToLetter = {
 	['1100'] = 'L'
 }
 
+-- позднее настроить чтобы чат не исчезал со временем
+-- at the second room we have no door to the next only binary cubes and after completing quest player will watch warning from police
+-- perhaps we don't need variables which are containing colors of short and long signals
+
 local Stage = {}
-
--- этот этап переходный между локациями, после его прохождения игрок попадает на след локацию
--- надо как-то отправить сигнал наверх что игра закончилась, а просто отправить self не получается, он отправлять детальку к которой касание происходит, меня почему-то это бесит
-
--- надо спавнить три комнаты с разными размерами
--- надо спавнить разное количество сигналов и в разных местах
--- надо спавнить комнаты после касания к телепорту
 
 Stage.__index = Stage
 
@@ -109,7 +106,8 @@ function Stage:SubscribeEvents()
 				self.Room:Destroy()
 				table.clear(self.Signals)
 				-- self.Room = self:SpawnRoom()
-				self.Game.Player.Character:MoveTo(Vector3.new(0,100,0))
+				self.IsReady = true
+				
 			end
 			
 		elseif role == 'signal' then
@@ -148,13 +146,13 @@ function Stage:SubscribeEvents()
 end
 
 function Stage:FinishAction()
-	for singalName, item in pairs(self.SignalList) do
-		item.Parent = singalName == self.SignalList.Long.Name and self.LongSignalFolder or self.ShortSignalFolder
-		-- table remove item
-	end
-	-- self.Location.IsReady = true
+	self.ShortSignal.Value, self.LongSignal.Value = self.SignalList.ShortColor, self.SignalList.LongColor
 	-- self.Event:Fire()
-	-- delete signals
+	self.Game.Player.Character:MoveTo(Vector3.new(0,100,0))
+
+	-- игроку подгружается роблокс плэер типо игра вылетела
+	-- запускается творое предупреждение 
+
 end
 
 function Stage:CreateSignalVars()
@@ -186,11 +184,6 @@ function Stage:CreateSingals(positions, roomModel, bytes, size)
 	local signalFolder = Instance.new('Folder')
 	signalFolder.Name = 'SignalFolder'
 	signalFolder.Parent = roomModel
-	-- they are different in the different level
-	-- вторую комнату будет прикольно сделать с дырками в полу, которые будут определять каждую букву и когда игрок будет туда кидать нужные кубики, то кубик затухает 
-	-- и в чате пишется буква 
-	-- в следующих комнатах сигналы будут вглядеть как платформы на глубине с неоновым светом и туда надо кидать кубики
-	-- local size = Vector3.new(5,5,5)
 
 	for i = 1, #positions do
 		local signalPart = createPart(positions[i], size, signalFolder)
@@ -200,8 +193,6 @@ function Stage:CreateSingals(positions, roomModel, bytes, size)
 		self:SetupSignals(signalPart, bytes[i])
 		table.insert(self.Signals, signalPart)
 	end
-
-	-- return signalFolder
 end
 
 function Stage:CreateRoom(properties, roomModel)
@@ -334,11 +325,9 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	local function createNodes()
         local nodes = {}
         for x = 1, math.floor(sizeRoom.X / 4) - 5 do
-            -- for z = 1, math.floor(sizeRoom.Z / 4) - 2 do
 			for y = 0, 1 do
 				table.insert(nodes, {x, y * 5, 1})
 			end
-            -- end
         end
         return nodes
     end
@@ -349,15 +338,11 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 	for i, node in pairs(createNodes()) do
 		local size = Vector3.new(5, 1, 5)
 		local pos = (startVector + Vector3.new(-2.5, 5, -10)) + (Vector3.new(table.unpack(node)) * size)
-		-- if node[3] % 2 == 0 then
 		table.insert(nodes, pos)
-		-- table.insert(binaryCodeField, 0)
-		-- end
 	end
 
 	local currentLetter = {}
 	local currentNodes = {}
-	local lastIteration
 	for i, char in pairs(binaryCode) do
 		if tonumber(char) then
 			table.insert(currentNodes, nodes[i])
@@ -370,11 +355,7 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 
 	for i = 1, #binaryCodeField do
 		self:CreateSingals(binaryCodeField[i][1], roomModel, binaryCodeField[i][2], Vector3.new(1,1,1))
-		-- table.insert(letterList, signalFolder)
 	end
-	-- self:CreateSingals(nodes, roomModel, binaryCodeField, Vector3.new(1,1,1))
-	-- а если разобрать по бинару и позициям все позиции и бинары и собрать их в одну таблицу чтобы потом через цикл протащить креате сигнал
-
 end
 
 function Stage:CreateRoomContent(roomModel)
@@ -401,7 +382,6 @@ function Stage:SpawnRoom()
 	local roomModel = Instance.new("Model")
 	roomModel.Parent = workspace
 
-	-- размеры будут зависеть от уровня
 	local properties = {
 		wallsPositionValue = 50,
 		wallHeight = 40,
