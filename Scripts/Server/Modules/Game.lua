@@ -16,7 +16,7 @@ function Game.newGame(player)
     local self = setmetatable({}, Game)
 
     self.Player = player
-    self.LocationIndex = 2
+    self.LocationIndex = 3
 
     self:Init()
 

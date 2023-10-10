@@ -11,6 +11,16 @@ Location.Name = 'Location3'
 
 Location.__index = Location
 
+Location.PlayerProperty = {
+    Character = {
+        WalkSpeed = 40
+    }, 
+
+    Camera = {
+        FieldOfView = 80
+    }
+}
+
 function Location.Create(_game)
     local self = setmetatable({}, Location)
 
@@ -22,12 +32,19 @@ function Location.Create(_game)
     self.Stages = script.Parent.Stages:FindFirstChild(Location.Name)
     self.StageIndex = 1
     self.IsReady = false
+
+    self:Init()
+
     return self
 end
 
 function Location:Init()
     print('Location 3 start')
+    
+    self.Game.Player:LoadCharacter()
+    self.Game.PlayerManager.SetupCharacter(self.Game.Player, Location.PlayerProperty)
     self:ChangeStage()
+
     repeat wait() until self.IsReady
     print('Location 3 is over')
 
@@ -42,11 +59,15 @@ function Location:SubscribeEvents()
 end
 
 function Location:ChangeStage()
-    for i, stage in pairs(self.Stages:GetChildren()) do
-        local currentStage = stage.Create()
-        currentStage:Init()
-    end
-    self.IsReady = true
+    -- for i, stage in pairs(self.Stages:GetChildren()) do
+    --     local currentStage = stage.Create()
+    --     currentStage:Init()
+    -- end
+
+    local a = self.Stages:GetChildren()
+    local b = require(a[1])
+    b.Create()
+    -- self.IsReady = true
 end
 
 return Location
