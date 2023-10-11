@@ -38,10 +38,6 @@ local binaryToLetter = {
 	['1100'] = 'L'
 }
 
--- позднее настроить чтобы чат не исчезал со временем
--- at the second room we have no door to the next only binary cubes and after completing quest player will watch warning from police
--- perhaps we don't need variables which are containing colors of short and long signals
-
 local Stage = {}
 
 Stage.__index = Stage
@@ -193,6 +189,8 @@ function Stage:CreateSingals(positions, roomModel, bytes, size)
 		self:SetupSignals(signalPart, bytes[i])
 		table.insert(self.Signals, signalPart)
 	end
+
+	-- return signalFolder
 end
 
 function Stage:CreateRoom(properties, roomModel)
@@ -337,8 +335,11 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 
 	for i, node in pairs(createNodes()) do
 		local size = Vector3.new(5, 1, 5)
-		local pos = (startVector + Vector3.new(-2.5, 5, -10)) + (Vector3.new(table.unpack(node)) * size)
-		table.insert(nodes, pos)
+		local pos = (startVector + Vector3.new(-size.X / 2, 10, -size.Z / 2)) + (Vector3.new(table.unpack(node)) * size)
+		if node[3] % 2 == 1 then
+			table.insert(nodes, pos)
+			-- table.insert(binaryCodeField, node[2])
+		end
 	end
 
 	local currentLetter = {}
@@ -355,7 +356,10 @@ function Stage:CreateSignalsField(contentModel, roomModel)
 
 	for i = 1, #binaryCodeField do
 		self:CreateSingals(binaryCodeField[i][1], roomModel, binaryCodeField[i][2], Vector3.new(1,1,1))
+		-- table.insert(letterList, signalFolder)
 	end
+	-- а если разобрать по бинару и позициям все позиции и бинары и собрать их в одну таблицу чтобы потом через цикл протащить креате сигнал
+
 end
 
 function Stage:CreateRoomContent(roomModel)
@@ -382,6 +386,7 @@ function Stage:SpawnRoom()
 	local roomModel = Instance.new("Model")
 	roomModel.Parent = workspace
 
+	-- размеры будут зависеть от уровня
 	local properties = {
 		wallsPositionValue = 50,
 		wallHeight = 40,
