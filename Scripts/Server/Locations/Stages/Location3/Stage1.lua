@@ -2,29 +2,25 @@ local Lighting = game:GetService("Lighting")
 
 local BASEPLATE_MOVE_SPEED = 0.005
 
-local function createNodes(startPosition: Vector3, cellSize: Vector3)
+local function createMaze(nIter: number, startPosition: Vector3, cellSize: Vector3)
 	local nodes = {}
-	for x = 1, 10 do
+	for x = 1, nIter do
 		nodes[x] = {}
-		for z = 1, 10 do
-			nodes[x][z] = { Vector3.new(x * cellSize.X - cellSize.X / 2, 0, z * cellSize.Z - cellSize.Z / 2) + startPosition }
+		for z = 1, nIter do
+			table.insert(nodes[x], Vector3.new(x * cellSize.X - cellSize.X / 2, 0, z * cellSize.Z - cellSize.Z / 2) + startPosition)
 		end
 	end
 
-	local val = 0
-	for i, p in pairs(nodes) do
-		-- print(p)
+	for j, p in pairs(nodes) do
 		for i, pp in pairs(p) do
-			-- print(pp)
+			if i % 2 == 0 and j == nIter or i % 2 == 1 and j == 1 then continue end
 			local p = Instance.new('Part')
 			p.Parent = workspace
 			p.Anchored = true
-			p.Size = cellSize
+			p.Size = Vector3.new(cellSize.X, cellSize.Y, 1)
 			p.Color = Color3.new(0,0,1)
-			p.Position = pp[1]
-			-- val += i % 2 == 0 and -5 or 5
+			p.Position = pp - Vector3.new(0, 0, cellSize.Z / 2)
 		end
-		-- val += 5
 	end
 
 
@@ -64,9 +60,9 @@ function Stage:Init()
 
 	-- self:CreateMaze()
 	self:SpawnRoom()
-
+	self:ChangeCharacterSize()
 	if self.Game.Player.Character.HumanoidRootPart and self.PlayerSpawnPoint then
-		self.Game.Player.Character.HumanoidRootPart.CFrame = self.PlayerSpawnPoint.CFrame
+		self.Game.Player.Character.HumanoidRootPart.CFrame = self.PlayerSpawnPoint.Value
 	end
 
 	repeat wait() until self.IsReady
@@ -76,24 +72,32 @@ end
 
 
 function Stage:SpawnRoom()
-	self.Room, roomSize, pivot = self:CreateRoom()
-	self:CreateContent(self.Room, roomSize, pivot)
-end
-
-function Stage:CreateContent(room, roomSize, pivot)
-	local cellSize = Vector3.new(5,1,5) -- roomSize.Y - 20
-	local startVector = Vector3.new(pivot.X - roomSize.X / 2, pivot.Y, pivot.Z - roomSize.Z / 2)
-
-	self.PlayerSpawnPoint = createPart(room, startVector, cellSize)
-
-	createNodes(startVector - Vector3.new(0,5,0), cellSize)
-end
-
-function Stage:CreateRoom()
 	local roomProperties = {
-		roomSize = 50,
+		roomSize = 100,
 		wallHeight = 50
 	}
+
+	self.Room, roomSize, pivot = self:CreateRoom(roomProperties)
+	self:CreateContent(roomProperties, self.Room, roomSize, pivot)
+end
+
+function Stage:CreateContent(roomProperties, room, roomSize, pivot)
+	local cellSize = Vector3.new(10,roomProperties.wallHeight - 10,10) -- roomSize.Y - 20
+	local startVector = Vector3.new(pivot.X - roomSize.X / 2, pivot.Y - 5, pivot.Z - roomSize.Z / 2 + cellSize.Z / 2)
+
+	local spawn_ = createPart(room, Vector3.new(pivot.X + roomSize.X / 2 - 2.5, pivot.Y + 20, pivot.Z - roomSize.Z / 2 + 2.5), Vector3.new(5,1,5))
+	spawn_.Color = Color3.new(1,1,0)
+	self.PlayerSpawnPoint = Instance.new('CFrameValue')
+	self.PlayerSpawnPoint.Value = CFrame.new(0, 15, 0) * spawn_.CFrame
+
+	local finishPoint = createPart(room, Vector3.new(pivot.X - roomSize.X / 2 + 2.5, pivot.Y + 20, pivot.Z + roomSize.Z / 2 - 2.5), Vector3.new(5,5,5))
+	finishPoint.Color = Color3.new(0,0,0)
+
+	createMaze(roomProperties.roomSize / 10, startVector, cellSize)
+end
+
+function Stage:CreateRoom(roomProperties)
+	
 
 	local sides = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} }
 	local model = Instance.new('Model')
@@ -113,7 +117,7 @@ function Stage:CreateRoom()
 end
 
 function Stage:ChangeCharacterSize()
-	local character = self.Game.Player.Character
+	self.Game.Player.Character:ScaleTo(.2)
 end
 
 function Stage:MoveBaseplate()

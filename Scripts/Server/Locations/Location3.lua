@@ -13,7 +13,7 @@ Location.__index = Location
 
 Location.PlayerProperty = {
     Character = {
-        WalkSpeed = 40
+        WalkSpeed = 16
     }, 
 
     Camera = {
@@ -66,7 +66,7 @@ function Location:ChangeStage()
 
     local a = self.Stages:GetChildren()
     local b = require(a[1])
-    b.Create()
+    b.Create(self.Game)
     -- self.IsReady = true
 end
 
