@@ -24,8 +24,6 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     local canRunning = true
     
     if propertyList.Character.CanRunning ~= nil then canRunning = propertyList.Character.CanRunning end
-    print(canRunning, 'canRunning')
-    print(propertyList)
     local AngleX,TargetAngleX = 0,0
     local AngleY,TargetAngleY = 0,0
     local Sensitivity = 0.6

@@ -143,12 +143,19 @@ end
 
 
 function Stage:MoveBaseplate(baseplate, roof)
-
+	local changeLight = true
+	local val = .001
 	self.MoveBaseplate = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
 		baseplate.Position += Vector3.new(0, BASEPLATE_MOVE_SPEED, 0)
 		self:UpdateState(deltaTime)
 		if baseplate.Position.Y >= roof.Position.Y - 10 then self.MoveBaseplate:Disconnect() end
-		if baseplate.Position.Y >= roof.Position.Y - 50 then roof.SurfaceLight.Color:Lerp(Color3.new(1,0,0), .1) end
+		if baseplate.Position.Y >= roof.Position.Y - 50 and changeLight then 
+			local currentColor = roof.SurfaceLight.Color
+			-- local currentRoofColor = roof.Color
+			roof.SurfaceLight.Color, roof.Color = roof.SurfaceLight.Color:Lerp(Color3.new(1,0,0), val), roof.Color:Lerp(Color3.new(1,0,0), val)
+			Lighting.Ambient, Lighting.OutdoorAmbient = Lighting.Ambient:Lerp(Color3.new(1,0,0), val), Lighting.OutdoorAmbient:Lerp(Color3.new(1,0,0), val)
+			if currentColor == roof.SurfaceLight.Color then changeLight = false print('over change light') end
+		end
 	end)
 end
 
@@ -159,9 +166,8 @@ function Stage:UpdateState(deltaTime)
 	if t >= 5 then
 		t = 0
 		val += .01
-		local col = Color3.new(val, val, val)
-		Lighting.Ambient = col
-		Lighting.OutdoorAmbient = col
+		Lighting.Ambient:Lerp(Color3.new(1,1,1), .001)
+		Lighting.OutdoorAmbient:Lerp(Color3.new(1,1,1), .001)
 		if Lighting.Brightness <= 10 then Lighting.Brightness += val end
 		if Lighting.EnvironmentDiffuseScale <= 1 then Lighting.EnvironmentDiffuseScale += val end
 		if Lighting.EnvironmentSpecularScale <= 1 then Lighting.EnvironmentSpecularScale += val end
