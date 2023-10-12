@@ -13,11 +13,12 @@ Location.__index = Location
 
 Location.PlayerProperty = {
     Character = {
-        WalkSpeed = 16
+        WalkSpeed = 8,
+        CanRunning = false
     }, 
 
     Camera = {
-        FieldOfView = 80
+        FieldOfView = 120
     }
 }
 

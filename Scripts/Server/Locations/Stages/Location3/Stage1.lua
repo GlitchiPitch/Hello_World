@@ -1,6 +1,6 @@
 local Lighting = game:GetService("Lighting")
 
-local BASEPLATE_MOVE_SPEED = 0.005
+local BASEPLATE_MOVE_SPEED = 0.01
 
 local function createMaze(nIter: number, startPosition: Vector3, cellSize: Vector3)
 	local nodes = {}
@@ -18,7 +18,7 @@ local function createMaze(nIter: number, startPosition: Vector3, cellSize: Vecto
 			p.Parent = workspace
 			p.Anchored = true
 			p.Size = Vector3.new(cellSize.X, cellSize.Y, 1)
-			p.Color = Color3.new(0,0,1)
+			p.Color = Color3.new(.2,.2,.2)
 			p.Position = pp - Vector3.new(0, 0, cellSize.Z / 2)
 		end
 	end
@@ -32,7 +32,7 @@ local function createPart(parent, position, size)
 	part.Parent = parent
 	part.Size = size
 	part.Position = position
-	part.Color = Color3.new(0,1,0)
+	part.Color = Color3.new(.5,.5,.5)
 	part.Anchored = true
 
 	return part
@@ -50,6 +50,7 @@ function Stage.Create(game_, map, resourses)
 	self.Resourses = resourses
 	self.IsReady = true
 	self.PlayerSpawnPoint = nil
+	self.MoveBaseplate = nil -- connect
 
 	self:Init()
 	return self
@@ -59,6 +60,7 @@ function Stage:Init()
 	print("stage 1 is started")
 
 	-- self:CreateMaze()
+	self:SetupStage()
 	self:SpawnRoom()
 	self:ChangeCharacterSize()
 	if self.Game.Player.Character.HumanoidRootPart and self.PlayerSpawnPoint then
@@ -70,15 +72,22 @@ function Stage:Init()
 	print("stage is ready")
 end
 
+function Stage:SetupStage()
+	Lighting.Ambient, Lighting.OutdoorAmbient = Color3.new(.1,.1,.1), Color3.new(.1,.1,.1)
+	Lighting.Brightness, Lighting.ExposureCompensation = 0, 0
+	Lighting.EnvironmentDiffuseScale, Lighting.EnvironmentSpecularScale = 0, 0
+
+end
 
 function Stage:SpawnRoom()
 	local roomProperties = {
 		roomSize = 100,
-		wallHeight = 50
+		wallHeight = 100
 	}
 
-	self.Room, roomSize, pivot = self:CreateRoom(roomProperties)
+	self.Room, roomSize, pivot, bottom, roof = self:CreateRoom(roomProperties)
 	self:CreateContent(roomProperties, self.Room, roomSize, pivot)
+	self:MoveBaseplate(bottom, roof)
 end
 
 function Stage:CreateContent(roomProperties, room, roomSize, pivot)
@@ -88,9 +97,9 @@ function Stage:CreateContent(roomProperties, room, roomSize, pivot)
 	local spawn_ = createPart(room, Vector3.new(pivot.X + roomSize.X / 2 - 2.5, pivot.Y + 20, pivot.Z - roomSize.Z / 2 + 2.5), Vector3.new(5,1,5))
 	spawn_.Color = Color3.new(1,1,0)
 	self.PlayerSpawnPoint = Instance.new('CFrameValue')
-	self.PlayerSpawnPoint.Value = CFrame.new(0, 15, 0) * spawn_.CFrame
+	self.PlayerSpawnPoint.Value = spawn_.CFrame
 
-	local finishPoint = createPart(room, Vector3.new(pivot.X - roomSize.X / 2 + 2.5, pivot.Y + 20, pivot.Z + roomSize.Z / 2 - 2.5), Vector3.new(5,5,5))
+	local finishPoint = createPart(room, Vector3.new(pivot.X - roomSize.X / 2 + 2.5, pivot.Y + 30, pivot.Z + roomSize.Z / 2 - 2.5), Vector3.new(5,5,5))
 	finishPoint.Color = Color3.new(0,0,0)
 
 	createMaze(roomProperties.roomSize / 10, startVector, cellSize)
@@ -113,26 +122,52 @@ function Stage:CreateRoom(roomProperties)
 	local roof = createPart(model, pivot.Position + Vector3.new(0, roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
 	local bottom = createPart(model, pivot.Position + Vector3.new(0, -roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
 
-	return model, roomSize, pivot
+
+	local light = Instance.new('SurfaceLight')
+	light.Parent = roof
+	light.Face = Enum.NormalId.Bottom
+	light.Brightness = 5
+	light.Angle = 0
+	light.Range = 100
+	roof.Color = Color3.new(1,1,1)
+	roof.Material = Enum.Material.Neon
+
+	bottom.Color = Color3.new(0,0,0)
+
+	return model, roomSize, pivot, bottom, roof
 end
 
 function Stage:ChangeCharacterSize()
 	self.Game.Player.Character:ScaleTo(.2)
 end
 
-function Stage:MoveBaseplate()
-	local baseplate = Instance.new("Part") -- self.Map.Baseplate
-	local roof = Instance.new("Part") -- self.Map.Roof
-	local startPosition = Vector3.new(0, 0, 0)
-	baseplate.Position = startPosition
 
-	self.MoveBaseplate = game:GetService("RunService").Heartbeat:Connect(function()
+function Stage:MoveBaseplate(baseplate, roof)
+
+	self.MoveBaseplate = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
 		baseplate.Position += Vector3.new(0, BASEPLATE_MOVE_SPEED, 0)
+		self:UpdateState(deltaTime)
+		if baseplate.Position.Y >= roof.Position.Y - 10 then self.MoveBaseplate:Disconnect() end
+		if baseplate.Position.Y >= roof.Position.Y - 50 then roof.SurfaceLight.Color:Lerp(Color3.new(1,0,0), .1) end
 	end)
 end
 
-function Stage:UpdateState()
-	local current
+local val = .1
+local t = 0
+function Stage:UpdateState(deltaTime)
+	t += deltaTime
+	if t >= 5 then
+		t = 0
+		val += .01
+		local col = Color3.new(val, val, val)
+		Lighting.Ambient = col
+		Lighting.OutdoorAmbient = col
+		if Lighting.Brightness <= 10 then Lighting.Brightness += val end
+		if Lighting.EnvironmentDiffuseScale <= 1 then Lighting.EnvironmentDiffuseScale += val end
+		if Lighting.EnvironmentSpecularScale <= 1 then Lighting.EnvironmentSpecularScale += val end
+		if Lighting.ExposureCompensation <= 3 then Lighting.ExposureCompensation += val end
+
+	end
 end
 
 return Stage

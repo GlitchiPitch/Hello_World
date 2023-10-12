@@ -23,9 +23,9 @@ local ClientManager = {}
 Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
     local canRunning = true
     
-    if propertyList.Character.CanRunning then
-        canRunning = propertyList.Character.CanRunning
-    end
+    if propertyList.Character.CanRunning ~= nil then canRunning = propertyList.Character.CanRunning end
+    print(canRunning, 'canRunning')
+    print(propertyList)
     local AngleX,TargetAngleX = 0,0
     local AngleY,TargetAngleY = 0,0
     local Sensitivity = 0.6
@@ -141,7 +141,7 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
             end	
         end
 
-        if lshift and w then
+        if lshift and w and canRunning then
 			FieldOfView = lerp(FieldOfView, walkspeeds.runningFOV, easingtime)
 			human.WalkSpeed = lerp(human.WalkSpeed, human.WalkSpeed + (walkspeeds.runningspeed - human.WalkSpeed), easingtime)
 		end
