@@ -51,6 +51,8 @@ function Stage:FinishAction()
     
 end
 
+-- every cube will send pitch for the piano sound i need to calculate pitch for every note 
+
 function Stage:SubscribeEvents()
 	self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player, role, ...)
 
