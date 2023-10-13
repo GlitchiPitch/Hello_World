@@ -61,7 +61,6 @@ function Stage:Init()
 	-- self:CreateMaze()
 	self:SetupStage()
 	self:SpawnRoom()
-	self:ChangeCharacterSize()
 	if self.Game.Player.Character.HumanoidRootPart and self.PlayerSpawnPoint then
 		self.Game.Player.Character.HumanoidRootPart.CFrame = self.PlayerSpawnPoint.Value
 	end
@@ -80,6 +79,8 @@ function Stage:SetupStage()
 	Lighting.Ambient, Lighting.OutdoorAmbient = Color3.new(.1,.1,.1), Color3.new(.1,.1,.1)
 	Lighting.Brightness, Lighting.ExposureCompensation = 0, 0
 	Lighting.EnvironmentDiffuseScale, Lighting.EnvironmentSpecularScale = 0, 0
+
+	self.Game.Player.Character:ScaleTo(.2)
 
 end
 
@@ -150,11 +151,6 @@ function Stage:CreateRoom(roomProperties)
 
 	return model, roomSize, pivot, bottom, roof
 end
-
-function Stage:ChangeCharacterSize()
-	self.Game.Player.Character:ScaleTo(.2)
-end
-
 
 function Stage:MoveBaseplate(baseplate, roof)
 	local changeLight = true
