@@ -36,6 +36,7 @@ function Game:Preload()
     GameManager.CreateStartMenu(self.Player)
 
     self.PlayerManager = require(ServerScriptService.Modules.PlayerManager)
+    self.CommonFunctions = require(ServerScriptService.Modules.CommonFunctions)
     self.Events = require(ReplicatedStorage.Modules.Events)
 end
 

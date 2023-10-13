@@ -10,12 +10,12 @@ local function createMaze(nIter: number, startPosition: Vector3, cellSize: Vecto
 			table.insert(nodes[x], Vector3.new(x * cellSize.X - cellSize.X / 2, 0, z * cellSize.Z - cellSize.Z / 2) + startPosition)
 		end
 	end
-
+	local mazeModel = Instance.new('Model')
 	for j, p in pairs(nodes) do
 		for i, pp in pairs(p) do
 			if i % 2 == 0 and j == nIter or i % 2 == 1 and j == 1 then continue end
 			local p = Instance.new('Part')
-			p.Parent = workspace
+			p.Parent = mazeModel
 			p.Anchored = true
 			p.Size = Vector3.new(cellSize.X, cellSize.Y, 1)
 			p.Color = Color3.new(.2,.2,.2)
@@ -23,8 +23,7 @@ local function createMaze(nIter: number, startPosition: Vector3, cellSize: Vecto
 		end
 	end
 
-
-	-- return nodes
+	return mazeModel
 end
 
 local function createPart(parent, position, size)
@@ -48,7 +47,7 @@ function Stage.Create(game_, map, resourses)
 	self.Game = game_
 	self.Map = map
 	self.Resourses = resourses
-	self.IsReady = true
+	self.IsReady = false
 	self.PlayerSpawnPoint = nil
 	self.MoveBaseplate = nil -- connect
 
@@ -68,8 +67,13 @@ function Stage:Init()
 	end
 
 	repeat wait() until self.IsReady
-
+	self:FinishAction()
 	print("stage is ready")
+end
+
+function Stage:FinishAction()
+	self.MoveBaseplate:Disconnect()
+	self.Room:Destroy()
 end
 
 function Stage:SetupStage()
@@ -86,23 +90,32 @@ function Stage:SpawnRoom()
 	}
 
 	self.Room, roomSize, pivot, bottom, roof = self:CreateRoom(roomProperties)
-	self:CreateContent(roomProperties, self.Room, roomSize, pivot)
+	self:CreateContent(roomProperties, self.Room, roomSize, pivot, roof)
 	self:MoveBaseplate(bottom, roof)
 end
 
-function Stage:CreateContent(roomProperties, room, roomSize, pivot)
+function Stage:CreateContent(roomProperties, room, roomSize, pivot, roof)
 	local cellSize = Vector3.new(10,roomProperties.wallHeight - 10,10) -- roomSize.Y - 20
 	local startVector = Vector3.new(pivot.X - roomSize.X / 2, pivot.Y - 5, pivot.Z - roomSize.Z / 2 + cellSize.Z / 2)
 
-	local spawn_ = createPart(room, Vector3.new(pivot.X + roomSize.X / 2 - 2.5, pivot.Y + 20, pivot.Z - roomSize.Z / 2 + 2.5), Vector3.new(5,1,5))
+	local spawn_ = createPart(room, Vector3.new(pivot.X + roomSize.X / 2 - 2.5, roof.Position.Y - 20, pivot.Z - roomSize.Z / 2 + 2.5), Vector3.new(5,1,5))
 	spawn_.Color = Color3.new(1,1,0)
 	self.PlayerSpawnPoint = Instance.new('CFrameValue')
 	self.PlayerSpawnPoint.Value = spawn_.CFrame
 
-	local finishPoint = createPart(room, Vector3.new(pivot.X - roomSize.X / 2 + 2.5, pivot.Y + 30, pivot.Z + roomSize.Z / 2 - 2.5), Vector3.new(5,5,5))
+	local finishPoint = createPart(room, Vector3.new(pivot.X - roomSize.X / 2 + 1.5, roof.Position.Y - 20, pivot.Z + roomSize.Z / 2 - 3.5), Vector3.new(5,40,4.5))
 	finishPoint.Color = Color3.new(0,0,0)
+	finishPoint.CanCollide = false
 
-	createMaze(roomProperties.roomSize / 10, startVector, cellSize)
+	finishPoint.Touched:Connect(function(hitPart)
+		if self.Game.Player.Character == hitPart.Parent then
+			task.wait(1)
+			self.IsReady = true
+		end
+	end)
+
+	local maze = createMaze(roomProperties.roomSize / 10, startVector, cellSize)
+	maze.Parent = room
 end
 
 function Stage:CreateRoom(roomProperties)
@@ -126,6 +139,7 @@ function Stage:CreateRoom(roomProperties)
 	local light = Instance.new('SurfaceLight')
 	light.Parent = roof
 	light.Face = Enum.NormalId.Bottom
+	light.Color = Color3.new(1,1,1)
 	light.Brightness = 5
 	light.Angle = 0
 	light.Range = 100
@@ -147,33 +161,17 @@ function Stage:MoveBaseplate(baseplate, roof)
 	local val = .001
 	self.MoveBaseplate = game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
 		baseplate.Position += Vector3.new(0, BASEPLATE_MOVE_SPEED, 0)
-		self:UpdateState(deltaTime)
+		if Lighting.Brightness <= 10 then Lighting.Brightness += val end
+		if Lighting.ExposureCompensation <= 3 then Lighting.ExposureCompensation += val end
 		if baseplate.Position.Y >= roof.Position.Y - 10 then self.MoveBaseplate:Disconnect() end
 		if baseplate.Position.Y >= roof.Position.Y - 50 and changeLight then 
 			local currentColor = roof.SurfaceLight.Color
-			-- local currentRoofColor = roof.Color
 			roof.SurfaceLight.Color, roof.Color = roof.SurfaceLight.Color:Lerp(Color3.new(1,0,0), val), roof.Color:Lerp(Color3.new(1,0,0), val)
 			Lighting.Ambient, Lighting.OutdoorAmbient = Lighting.Ambient:Lerp(Color3.new(1,0,0), val), Lighting.OutdoorAmbient:Lerp(Color3.new(1,0,0), val)
+			Lighting.ColorShift_Bottom, Lighting.ColorShift_Top = Lighting.ColorShift_Bottom:Lerp(Color3.new(1,0,0), val), Lighting.ColorShift_Top:Lerp(Color3.new(1,0,0), val)
 			if currentColor == roof.SurfaceLight.Color then changeLight = false print('over change light') end
 		end
 	end)
-end
-
-local val = .1
-local t = 0
-function Stage:UpdateState(deltaTime)
-	t += deltaTime
-	if t >= 5 then
-		t = 0
-		val += .01
-		Lighting.Ambient:Lerp(Color3.new(1,1,1), .001)
-		Lighting.OutdoorAmbient:Lerp(Color3.new(1,1,1), .001)
-		if Lighting.Brightness <= 10 then Lighting.Brightness += val end
-		if Lighting.EnvironmentDiffuseScale <= 1 then Lighting.EnvironmentDiffuseScale += val end
-		if Lighting.EnvironmentSpecularScale <= 1 then Lighting.EnvironmentSpecularScale += val end
-		if Lighting.ExposureCompensation <= 3 then Lighting.ExposureCompensation += val end
-
-	end
 end
 
 return Stage
