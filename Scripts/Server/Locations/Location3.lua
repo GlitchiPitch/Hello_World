@@ -60,14 +60,19 @@ function Location:SubscribeEvents()
 end
 
 function Location:ChangeStage()
+    local a = self.Stages:GetChildren()
+    for i = 2, #a do
+        local currentStage = require(a[i])
+        currentStage.Create(self.Game)
+    end
     -- for i, stage in pairs(self.Stages:GetChildren()) do
     --     local currentStage = require(stage)
     --     currentStage.Create(self.Game)
     -- end
 
-    local a = self.Stages:GetChildren()
-    local b = require(a[2])
-    b.Create(self.Game)
+    -- local a = self.Stages:GetChildren()
+    -- local b = require(a[2])
+    -- b.Create(self.Game)
     -- -- self.IsReady = true
 end
 
