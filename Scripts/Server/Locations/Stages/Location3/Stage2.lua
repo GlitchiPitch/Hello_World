@@ -26,6 +26,9 @@ function Stage.Create(game_, map, resourses)
 	self.IsReady = false
     self.PlayerSpawnPoint = nil
 
+	self.PianoSound = Instance.new('Sound') -- if to use sine wave with no length of playing, (the playing of sound is constant, may change playback speed )
+	-- self.PianoSound:Stop
+
     self:Init()
     return self
 end
@@ -54,8 +57,19 @@ end
 -- every cube will send pitch for the piano sound i need to calculate pitch for every note 
 
 function Stage:SubscribeEvents()
-	self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player, role, ...)
+	local prevIndex = 0
+	self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player,  pitch)
+		if pitch - prevIndex == 1 then
+			print('if')
+			prevIndex = pitch
+		else
+			prevIndex = 0
+			self.PianoSound:Stop()
+			return
+		end
 
+		self.PianoSound.PlaybackSpeed = pitch
+		self.PianoSound:Play()
 	end)
 	
 end
@@ -65,7 +79,13 @@ function Stage:SetupStage()
     Lighting.Brightness, Lighting.ExposureCompensation = 0, 0
     Lighting.ColorShift_Bottom, Lighting.ColorShift_Top = Color3.new(0,0,0), Color3.new(0,0,0)
 
+	self.PianoSound.Looped = true
+	self.PianoSound.SoundId = 'rbxassetid://4462044869'
+	self.PianoSound.Volume = .1
+	self.PianoSound.Parent = self.Game.Player.Character.Head
 	-- self.Game.Player.Character:ScaleTo(.2)
+
+	self:SubscribeEvents()
 
 end
 
@@ -86,8 +106,16 @@ function Stage:CreateContent(room, roomSize, pivot)
 	local poses = {{1, 0}, {-1, 1}, {-1, -1}, {2, 2}, {2, -2}, {-2, 2}, {-2, -2}}
 	for i, pos in pairs(poses) do
 		local key = createPart(model, Vector3.new(startVector.X + (10 * pos[1]), startVector.Y - 15 ,startVector.Z  + (10 * pos[2])), Vector3.new(5,5,5))
-		key.Color = Color3.new(0,0,0)
+		self:SetupKey(key, i)
 	end
+end
+
+function Stage:SetupKey(key, index)
+	game:GetService('CollectionService'):AddTag(key, 'Interact')
+	key:SetAttribute('Role', index)
+	
+	key.Color = Color3.new(0,0,0)
+	
 end
 
 function Stage:CreateRoom()
