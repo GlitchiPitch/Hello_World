@@ -54,6 +54,10 @@ end
 function Stage:FinishAction()
     game:GetService('CollectionService'):AddTag(self.Room, 'Heaven')
 	self.PianoSound:Destroy()
+	for _, key in pairs(self.Keys) do
+		key:Destroy()
+	end
+	self.Event:Disconnect()
 end
 
 -- every cube will send pitch for the piano sound i need to calculate pitch for every note 
@@ -62,6 +66,7 @@ function Stage:SubscribeEvents()
 
 	local function activatedKey(key)
 		key.Material = Enum.Material.Neon
+		game:GetService('CollectionService'):RemoveTag(key, 'Interact')
 		local tween = game:GetService('TweenService'):Create(key, TweenInfo.new(1), {Color = Color3.new(1,1,1)}) 
 		tween:Play()
 	end
@@ -69,13 +74,13 @@ function Stage:SubscribeEvents()
 	local function disabledKeys()
 		for _, key in pairs(self.Keys) do
 			key.Color, key.Material = Color3.new(0,0,0), Enum.Material.SmoothPlastic
+			game:GetService('CollectionService'):AddTag(key, 'Interact')
 		end
 	end
 
 	local prevIndex = 0
-	self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player,  pitch, key)
+	self.Event = self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player,  pitch, key)
 		if pitch - prevIndex == 1 then
-			print('if')
 			prevIndex = pitch
 			activatedKey(key)
 		else
@@ -159,7 +164,6 @@ function Stage:CreateRoom()
 	local model = Instance.new('Model')
 	model.Parent = workspace
 	local faces = Enum.NormalId:GetEnumItems()
-	print(faces)
 	for i, side in pairs(sides) do
 		local pos = Vector3.new(side[1] * roomProperties.roomSize / 2, roomProperties.wallHeight / 2, side[2] * roomProperties.roomSize / 2)
 		local size = Vector3.new(side[2] == 0 and 1 or math.abs(side[2] * roomProperties.roomSize), roomProperties.wallHeight, side[1] == 0 and 1 or math.abs(side[1] * roomProperties.roomSize))
