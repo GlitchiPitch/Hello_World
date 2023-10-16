@@ -25,6 +25,7 @@ function Stage.Create(game_, map, resourses)
 	self.Resourses = resourses
 	self.IsReady = false
     self.PlayerSpawnPoint = nil
+	self.Keys = {}
 
 	self.PianoSound = Instance.new('Sound') -- if to use sine wave with no length of playing, (the playing of sound is constant, may change playback speed )
 	-- self.PianoSound:Stop
@@ -60,9 +61,15 @@ end
 function Stage:SubscribeEvents()
 
 	local function activatedKey(key)
-		local l = Instance.new('SurfaceLight')
 		key.Material = Enum.Material.Neon
-		key.Color = Color3.new(1,1,1)
+		local tween = game:GetService('TweenService'):Create(key, TweenInfo.new(1), {Color = Color3.new(1,1,1)}) 
+		tween:Play()
+	end
+
+	local function disabledKeys()
+		for _, key in pairs(self.Keys) do
+			key.Color, key.Material = Color3.new(0,0,0), Enum.Material.SmoothPlastic
+		end
 	end
 
 	local prevIndex = 0
@@ -74,6 +81,7 @@ function Stage:SubscribeEvents()
 		else
 			prevIndex = 0
 			self.PianoSound:Stop()
+			disabledKeys()
 			return
 		end
 
@@ -137,6 +145,7 @@ function Stage:SetupKey(key, index)
 	key:SetAttribute('Role', index)
 	key.Color = Color3.new(0,0,0)
 	key.Material = Enum.Material.SmoothPlastic
+	table.insert(self.Keys, key)
 end
 
 function Stage:CreateRoom()
@@ -172,6 +181,7 @@ function Stage:CreateRoom()
 	local bottom = createPart(model, pivot.Position + Vector3.new(0, -roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
 	roof.Color, bottom.Color = MAIN_COLOR, MAIN_COLOR
 	roof.Material, bottom.Material = Enum.Material.Neon, Enum.Material.SmoothPlastic
+	roof.Name, bottom.Name = 'roof', 'bottom'
 
 	return model, roomSize, pivot, bottom
 end
