@@ -119,6 +119,7 @@ function Stage:SetupStage()
 		}
 	})
 	self.Game.Player.Character:ScaleTo(.2)
+	self.Game.Player.Character:FindFirstChild('Humanoid').JumpPower = 0
 
 	self:SubscribeEvents()
 

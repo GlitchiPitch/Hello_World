@@ -62,15 +62,19 @@ end
 function Stage:SubscribeEvents()
 
 	
-	self.Event = self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player, _, block)
-		block:Destroy()
+	self.Event = self.Game.Events.Remotes.Interact.OnServerEvent:Connect(function(player, role, object)
+		if role == 'Block' then
+			object:Destroy()
+		elseif role == 'FinalButton' then
+			self.IsReady = true
+		end
 	end)
 	
 end
 
 function Stage:SetupBlock(block)
 	game:GetService('CollectionService'):AddTag(block, 'Interact')
-	-- block:SetAttribute('Role', index)
+	block:SetAttribute('Role', 'Block')
 	block.Color = Color3.new(.5,.5,.5)
 	block.Material = Enum.Material.SmoothPlastic
 end
@@ -112,14 +116,11 @@ function Stage:CreateTower(bottom, spawnPos)
 		end
 	end
 
-
-
-
 	local cf, size = towerModel:GetBoundingBox()
+	
+	local pivot, roomSize = self:CreateMainRoom(Vector3.new(cf.Position.X, cf.Position.Y - size.Y / 2, cf.Position.Z))
 
-	self:CreateMainRoom()
-
-	bottom.Position = Vector3.new(cf.Position.X, cf.Position.Y - size.Y / 2 - .5, cf.Position.Z)
+	bottom.Position = Vector3.new(cf.Position.X, pivot.Y - roomSize.Y / 2 - 10, cf.Position.Z)
 	bottom.Size = Vector3.new(bottom.Size.X * 2, bottom.Size.Y, bottom.Size.Z * 2)
 	bottom.Material = Enum.Material.Neon
 	bottom.Touched:Connect(function(hitPart)
@@ -127,9 +128,74 @@ function Stage:CreateTower(bottom, spawnPos)
 	end)
 end
 
-function Stage:CreateMainRoom()
+function Stage:CreateMainRoom(bottomOfTowerPosition)
+
+	local roomProperties = {
+		roomSize = 50,
+		wallHeight = 20,
+		material = Enum.Material.Rubber
+	}
+
+	local sides = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} }
+	local model = Instance.new('Model')
+	model.Parent = workspace
+
+	for i, side in pairs(sides) do
+		local pos = Vector3.new(side[1] * roomProperties.roomSize / 2, bottomOfTowerPosition.Y - roomProperties.wallHeight / 2, side[2] * roomProperties.roomSize / 2)
+		local size = Vector3.new(side[2] == 0 and 1 or math.abs(side[2] * roomProperties.roomSize), roomProperties.wallHeight, side[1] == 0 and 1 or math.abs(side[1] * roomProperties.roomSize))
+		local wall = createPart(model, pos, size)
+		wall.Material = roomProperties.material
+		wall.Color = Color3.new(0.4, 0.3, 0.2)
+	end
+
+	local _, roomSize = model:GetBoundingBox()
+	local pivot = model:GetPivot()
+
+	local roof = createPart(model, pivot.Position + Vector3.new(0, roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
+	local bottom = createPart(model, pivot.Position + Vector3.new(0, -roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
+	roof.Color, bottom.Color = Color3.new(.5,.5,.5), Color3.new(.5,.5,.5)
+	roof.Material, bottom.Material = roomProperties.material, roomProperties.material
+	roof.Name, bottom.Name = 'roof', 'bottom'
+	roof.CanCollide = false
+
+	bottom.Touched:Connect(function(hitPart)
+		if self.Game.Player.Character == hitPart.Parent then
+			bottom.CanTouch = false
+			self:Message()
+		end
+	end)
+
+	self:CreateMainContent(model, pivot, roomSize)
+	return pivot, roomSize
 	
-	
+end
+
+function Stage:Message()
+
+	self.Game.Player.Character:FindFirstChild('HumanoidRootPart').Anchored = true
+
+	local msg = "Stop, don't touch this, I did it for the last moment for me, but it is not yet. I can't let you go because you will tell about this place. But we can agree and I'll leave you"
+
+	self.Game.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'coreGui', Enum.CoreGuiType.Chat, true)
+	for _, word in pairs(string.split(msg, ' ')) do
+		for i = 1, math.random(1,3) do
+		self.Game.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'sendChatMessage', word)
+		end
+		task.wait(math.random(0.5,1.5))
+	end
+
+	self.Game.Player.Character:FindFirstChild('HumanoidRootPart').Anchored = false
+
+
+end
+
+function Stage:CreateMainContent(mainRoom, pivot, roomSize)
+	local buttonSize = Vector3.new(10,1,10)
+	local button = createPart(mainRoom, Vector3.new(pivot.X, pivot.Y - roomSize.Y / 2 + buttonSize.Y / 2, pivot.Z), buttonSize)
+	button.Material = Enum.Material.Neon
+	button.Color = Color3.new(0.7, 0.3, 0.3)
+	game:GetService('CollectionService'):AddTag(button, 'Interact')
+	button:SetAttribute('Role', 'FinalButton')
 end
 
 function Stage:SetupRoom()
@@ -149,12 +215,15 @@ function Stage:SetupRoom()
 				tween:Play()
 				obj.CanCollide = false
 			else
-				self:CreateTower(obj, self.Room:GetPivot())
+				self:CreateTower(obj, self.Room:GetPivot().Position)
 			end
 		end
 	end
 end
 
-function Stage:FinishAction() end
+function Stage:FinishAction() 
+	self.Event:Disconnect()
+	self.Room:Destroy()
+end
 
 return Stage

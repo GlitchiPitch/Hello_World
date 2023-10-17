@@ -145,6 +145,7 @@ function Stage:FinishAction()
 	self.ShortSignal.Value, self.LongSignal.Value = self.SignalList.ShortColor, self.SignalList.LongColor
 	-- self.Event:Fire()
 	self.Game.Player.Character:MoveTo(Vector3.new(0,100,0))
+	self.Events.Remotes.UpdateClient:FireClient(self.Game.Player, 'coreGui', Enum.CoreGuiType.Chat, false)
 
 	-- игроку подгружается роблокс плэер типо игра вылетела
 	-- запускается творое предупреждение 
