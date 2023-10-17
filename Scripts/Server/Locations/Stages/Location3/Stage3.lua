@@ -20,6 +20,7 @@ function Stage.Create(game_)
 
 	self.Game = game_
 	self.Room = nil
+	self.MainRoom = nil
 	self.IsReady = false
 
 	self:Init()
@@ -118,7 +119,8 @@ function Stage:CreateTower(bottom, spawnPos)
 
 	local cf, size = towerModel:GetBoundingBox()
 	
-	local pivot, roomSize = self:CreateMainRoom(Vector3.new(cf.Position.X, cf.Position.Y - size.Y / 2, cf.Position.Z))
+	local model, pivot, roomSize = self:CreateMainRoom(Vector3.new(cf.Position.X, cf.Position.Y - size.Y / 2, cf.Position.Z))
+	self.MainRoom = model
 
 	bottom.Position = Vector3.new(cf.Position.X, pivot.Y - roomSize.Y / 2 - 10, cf.Position.Z)
 	bottom.Size = Vector3.new(bottom.Size.X * 2, bottom.Size.Y, bottom.Size.Z * 2)
@@ -162,11 +164,13 @@ function Stage:CreateMainRoom(bottomOfTowerPosition)
 		if self.Game.Player.Character == hitPart.Parent then
 			bottom.CanTouch = false
 			self:Message()
+			self:CreateWaitingRoom(model, roomSize)
+			self.Room:Destroy()
 		end
 	end)
 
 	self:CreateMainContent(model, pivot, roomSize)
-	return pivot, roomSize
+	return model, pivot, roomSize
 	
 end
 
@@ -184,18 +188,44 @@ function Stage:Message()
 		task.wait(math.random(0.5,1.5))
 	end
 
-	self.Game.Player.Character:FindFirstChild('HumanoidRootPart').Anchored = false
+	for _, obj in pairs(self.MainRoom:GetChildren()) do
+		if obj.Name == 'Part' then
+			local tween = game:GetService('TweenService'):Create(obj, TweenInfo.new(2), {Position = obj.Position - Vector3.new(0, obj.Size.Y)})
+			tween:Play()
+		end
+	end
 
+	self.Game.Player.Character:FindFirstChild('HumanoidRootPart').Anchored = false
 
 end
 
+function Stage:CreateWaitingRoom(mainRoom, roomSize)
+
+	local cloneMainRoom = mainRoom:Clone()
+	cloneMainRoom.Parent = workspace
+
+	cloneMainRoom:ScaleTo(3)
+
+	for _, obj in pairs(cloneMainRoom:GetChildren()) do
+		obj.Color = Color3.new(0.701960, 0.380392, 0.631372)
+	end
+
+	-- local _, size = cloneMainRoom:GetBoundingBox()
+
+	cloneMainRoom:PivotTo(CFrame.new(0, roomSize.Y / 2, 0) * mainRoom:GetPivot())
+	
+end
+
 function Stage:CreateMainContent(mainRoom, pivot, roomSize)
+	
 	local buttonSize = Vector3.new(10,1,10)
 	local button = createPart(mainRoom, Vector3.new(pivot.X, pivot.Y - roomSize.Y / 2 + buttonSize.Y / 2, pivot.Z), buttonSize)
 	button.Material = Enum.Material.Neon
 	button.Color = Color3.new(0.7, 0.3, 0.3)
 	game:GetService('CollectionService'):AddTag(button, 'Interact')
 	button:SetAttribute('Role', 'FinalButton')
+
+
 end
 
 function Stage:SetupRoom()
@@ -223,7 +253,7 @@ end
 
 function Stage:FinishAction() 
 	self.Event:Disconnect()
-	self.Room:Destroy()
+	-- self.Room:Destroy()
 end
 
 return Stage
