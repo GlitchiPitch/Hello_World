@@ -21,6 +21,7 @@ function Stage.Create(game_)
 	self.Game = game_
 	self.Room = nil
 	self.MainRoom = nil
+	self.BallCounter = nil
 	self.IsReady = false
 
 	self:Init()
@@ -37,6 +38,7 @@ function Stage:Init()
 	self:SubscribeEvents()
 	self:Setup()
 	repeat wait() until self.IsReady
+	print(' stage is finished')
 	self:FinishAction()
 end
 
@@ -68,6 +70,11 @@ function Stage:SubscribeEvents()
 			object:Destroy()
 		elseif role == 'FinalButton' then
 			self.IsReady = true
+			self.BallCounter.Value = -1
+		elseif role == 'Ball' then
+			object:Destroy()
+			-- chpok sound
+			self.BallCounter.Value += 1
 		end
 	end)
 	
@@ -163,13 +170,12 @@ function Stage:CreateMainRoom(bottomOfTowerPosition)
 	bottom.Touched:Connect(function(hitPart)
 		if self.Game.Player.Character == hitPart.Parent then
 			bottom.CanTouch = false
-			self:Message()
-			self:CreateWaitingRoom(model, roomSize)
+			self:CreateMainContent(model, pivot, roomSize)
 			self.Room:Destroy()
+			self:Message()
 		end
 	end)
 
-	self:CreateMainContent(model, pivot, roomSize)
 	return model, pivot, roomSize
 	
 end
@@ -199,7 +205,7 @@ function Stage:Message()
 
 end
 
-function Stage:CreateWaitingRoom(mainRoom, roomSize)
+function Stage:CreateWaitingRoom(mainRoom, roomSize, pivot)
 
 	local cloneMainRoom = mainRoom:Clone()
 	cloneMainRoom.Parent = workspace
@@ -210,21 +216,75 @@ function Stage:CreateWaitingRoom(mainRoom, roomSize)
 		obj.Color = Color3.new(0.701960, 0.380392, 0.631372)
 	end
 
-	-- local _, size = cloneMainRoom:GetBoundingBox()
+	local clonePivot, cloneSize = cloneMainRoom:GetBoundingBox()
 
-	cloneMainRoom:PivotTo(CFrame.new(0, roomSize.Y / 2, 0) * mainRoom:GetPivot())
+	cloneMainRoom:PivotTo(CFrame.new(0, roomSize.Y - 1, 0) * clonePivot)
 	
+	self.BallCounter = Instance.new('IntValue')
+	local counterGuiPart = createPart(cloneMainRoom, Vector3.new(clonePivot.X, clonePivot.Y + cloneSize.Y / 2 - 10, clonePivot.Z), Vector3.new(roomSize.X, 15, roomSize.Z))
+	counterGuiPart.Material = Enum.Material.SmoothPlastic
+	counterGuiPart.BrickColor = BrickColor.new('Magenta')
+	local faces = {Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right}
+	local labels = {}
+	for i = 1, #faces do
+		local counterGui = Instance.new('SurfaceGui')
+		local counterLabel = Instance.new('TextLabel')
+		counterLabel.Parent = counterGui
+		counterLabel.Text = 0
+		counterLabel.Name = 'counterLabel'
+		counterLabel.Size = UDim2.fromScale(1, 1)
+		counterLabel.TextScaled = true
+		counterLabel.BackgroundTransparency = 1
+		counterLabel.TextStrokeTransparency = 0
+		counterLabel.TextColor3 = Color3.new(1,1,1)
+
+		table.insert(labels, counterLabel)
+
+		counterGui.Parent = counterGuiPart
+		counterGui.Face = faces[i]
+	end
+
+	self.BallCounter.Changed:Connect(function(value)
+		for _, label in pairs(labels) do
+			label.Text = value
+		end
+	end)
+
+	local ballCount = 1000
+	local ballFolder = Instance.new('Folder')
+	ballFolder.Parent = cloneMainRoom
+	coroutine.wrap(function()
+		for i = 1, ballCount do
+
+			if self.BallCounter == -1 then break end
+
+			task.wait(math.random(1,10))
+			local ball = createPart(ballFolder, Vector3.new(
+				math.random(clonePivot.X - cloneSize.X / 2 + 10, clonePivot.X + cloneSize.X / 2 - 10), clonePivot.Y + cloneSize.Y / 2 - 10,
+				math.random(clonePivot.Z - cloneSize.Z / 2 + 10, clonePivot.Z + cloneSize.Z / 2 - 10)), Vector3.new(2,2,2))
+			ball:SetAttribute('Role', 'Ball')
+			ball.Shape = Enum.PartType.Ball
+			ball.BrickColor = BrickColor.random()
+			ball.Anchored = false
+			game:GetService('CollectionService'):AddTag(ball, 'Interact')
+		end
+		-- self.IsReady = true
+		-- i think here we need to load final module which are showing final scene with the 'good' end
+	end)()
+
 end
 
 function Stage:CreateMainContent(mainRoom, pivot, roomSize)
 	
+	self:CreateWaitingRoom(mainRoom, roomSize, pivot)
+
 	local buttonSize = Vector3.new(10,1,10)
 	local button = createPart(mainRoom, Vector3.new(pivot.X, pivot.Y - roomSize.Y / 2 + buttonSize.Y / 2, pivot.Z), buttonSize)
+	button.Name = 'Button'
 	button.Material = Enum.Material.Neon
 	button.Color = Color3.new(0.7, 0.3, 0.3)
 	game:GetService('CollectionService'):AddTag(button, 'Interact')
 	button:SetAttribute('Role', 'FinalButton')
-
 
 end
 
@@ -254,6 +314,7 @@ end
 function Stage:FinishAction() 
 	self.Event:Disconnect()
 	-- self.Room:Destroy()
+	-- glitch gui
 end
 
 return Stage
