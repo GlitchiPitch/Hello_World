@@ -21,6 +21,7 @@ function Stage.Create(game_)
 	self.Game = game_
 	self.Room = nil
 	self.MainRoom = nil
+	self.WaitingRoom = nil
 	self.BallCounter = nil
 	self.IsReady = false
 
@@ -172,7 +173,7 @@ function Stage:CreateMainRoom(bottomOfTowerPosition)
 			bottom.CanTouch = false
 			self:CreateMainContent(model, pivot, roomSize)
 			self.Room:Destroy()
-			self:Message()
+			-- self:Message()
 		end
 	end)
 
@@ -207,21 +208,21 @@ end
 
 function Stage:CreateWaitingRoom(mainRoom, roomSize, pivot)
 
-	local cloneMainRoom = mainRoom:Clone()
-	cloneMainRoom.Parent = workspace
+	self.WaitingRoom = mainRoom:Clone()
+	self.WaitingRoom.Parent = workspace
 
-	cloneMainRoom:ScaleTo(3)
+	self.WaitingRoom:ScaleTo(3)
 
-	for _, obj in pairs(cloneMainRoom:GetChildren()) do
+	for _, obj in pairs(self.WaitingRoom:GetChildren()) do
 		obj.Color = Color3.new(0.701960, 0.380392, 0.631372)
 	end
 
-	local clonePivot, cloneSize = cloneMainRoom:GetBoundingBox()
+	local clonePivot, cloneSize = self.WaitingRoom:GetBoundingBox()
 
-	cloneMainRoom:PivotTo(CFrame.new(0, roomSize.Y - 1, 0) * clonePivot)
+	self.WaitingRoom:PivotTo(CFrame.new(0, roomSize.Y - 1, 0) * clonePivot)
 	
 	self.BallCounter = Instance.new('IntValue')
-	local counterGuiPart = createPart(cloneMainRoom, Vector3.new(clonePivot.X, clonePivot.Y + cloneSize.Y / 2 - 10, clonePivot.Z), Vector3.new(roomSize.X, 15, roomSize.Z))
+	local counterGuiPart = createPart(self.WaitingRoom, Vector3.new(clonePivot.X, clonePivot.Y + cloneSize.Y / 2 - 10, clonePivot.Z), Vector3.new(roomSize.X, 15, roomSize.Z))
 	counterGuiPart.Material = Enum.Material.SmoothPlastic
 	counterGuiPart.BrickColor = BrickColor.new('Magenta')
 	local faces = {Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right}
@@ -252,11 +253,11 @@ function Stage:CreateWaitingRoom(mainRoom, roomSize, pivot)
 
 	local ballCount = 1000
 	local ballFolder = Instance.new('Folder')
-	ballFolder.Parent = cloneMainRoom
+	ballFolder.Parent = self.WaitingRoom
 	coroutine.wrap(function()
 		for i = 1, ballCount do
 
-			if self.BallCounter == -1 then break end
+			if self.BallCounter.Value == -1 then break end
 
 			task.wait(math.random(1,10))
 			local ball = createPart(ballFolder, Vector3.new(
@@ -313,8 +314,14 @@ end
 
 function Stage:FinishAction() 
 	self.Event:Disconnect()
+	-- print(self.WaitingRoom, self.Room:GetChildren())
+	-- print(self.WaitingRoom:FindFirstChild('bottom'), self.Room:FindFirstChild('bottom'))
+	self.WaitingRoom:FindFirstChild('bottom').CanCollide, self.MainRoom:FindFirstChild('bottom').CanCollide = false, false
+	game:GetService('CollectionService'):AddTag(self.MainRoom, 'PrevRoom')
 	-- self.Room:Destroy()
+	-- self.WaitingRoom:Destroy()
 	-- glitch gui
+	
 end
 
 return Stage
