@@ -21,6 +21,7 @@ local function createRoom(parent, roomProperties, isCorridor)
 		local wall = createPart(model, pos, size)
 		wall.Material = roomProperties.material
 		wall.Color = Color3.new(0.478431, 0.788235, 0.466666)
+		wall.Name = 'wall'
 	end
 
 	local pivot, roomSize = model:GetBoundingBox()
@@ -32,6 +33,7 @@ local function createRoom(parent, roomProperties, isCorridor)
 	roof.Name, bottom.Name = 'roof', 'bottom'
 	roof.CanCollide = false
 
+	return model
 end
 
 local Stage = {}
@@ -42,6 +44,8 @@ function Stage.Create(game_)
 	local self = setmetatable({}, Stage)
 	self.Game = game_
 	self.SpawnPivot = nil
+	self.BlackRoom = nil
+	self.Corridor = nil
 
 	self.IsReady = false
 
@@ -57,32 +61,54 @@ function Stage:CreateCorridor()
 	local corridorModel, blackRoom = Instance.new("Model"), Instance.new('Model')
 	corridorModel.Parent, blackRoom.Parent = workspace, workspace
 
-	createRoom(blackRoom, {
+	self.BlackRoom = createRoom(blackRoom, {
 		roomSize = 10,
-		wallHeight = 20,
+		wallHeight = 10,
 		material = Enum.Material.Rubber
 	}, false)
 
+
 	blackRoom:PivotTo(self.SpawnPivot[1] * CFrame.new(0, -self.SpawnPivot[2].Y, 0)) --* CFrame.new(0, -50, 0)
 
-	createRoom(corridorModel, {
+	self.Corridor = createRoom(corridorModel, {
 		roomSize = 25,
-		wallHeight = 20,
+		wallHeight = 10,
 		material = Enum.Material.Rubber
 	}, true)
 
 	corridorModel:PivotTo(self.SpawnPivot[1] * CFrame.new(0, -self.SpawnPivot[2].Y,100)) -- * CFrame.new(0, -50, 100)
 end
 
-function Stage:CreateBlackRoomContent(room)
-	local pos = Vector3.new()
-	local size = Vector3.new()
-	local portal = createPart(room, pos, size)
+function Stage:CreateCorridorContent(corridor)
+	
+end
+
+function Stage:CreateBlackRoomContent()
+	local cf, size = self.BlackRoom:GetBoundingBox()
+	local walls = {}
+	for _, obj in pairs(self.BlackRoom:GetChildren()) do if obj.Name == 'wall' then table.insert(walls, obj) end end
+	local currentWall = walls[math.random(#walls)]
+	local pos = currentWall.Size.Z == 1 and (currentWall.CFrame.X < cf.X and currentWall.Position + Vector3.new(1,0,0) or currentWall.Position - Vector3.new(1,0,0)) or
+				(currentWall.CFrame.Z < cf.Z and currentWall.Position + Vector3.new(0,0,1) or currentWall.Position - Vector3.new(0,0,1))
+	local size = Vector3.new(1,1,1)
+	local targetSize = currentWall.Size
+	local portal = createPart(self.BlackRoom, pos, size)
 
 	local changeSizeConnect
+	local characterPos = self.Game.Player.Character:GetPivot().Position
 	changeSizeConnect = game:GetService('RunService').Heartbeat:Connect(function(deltaTime)
-		
+		-- local charPos, portalPos
+		-- if math.abs(Vector3.new(charPos.X, 0, charPos.Z) - math.abs(portalPos).Magnitude) < 5 then
+		-- 	portal.Size = targetSize
+		-- else
+		local mag = (Vector3.new(characterPos.X, 0, characterPos.Z) - Vector3.new(portal.Position.X, 0, portal.Position.Z)).Magnitude
+		portal.Size *= Vector3.new(targetSize.X == 1 and 1 or mag / 10, mag / 10, targetSize.Z == 1 and 1 or mag / 10)
+		-- print((Vector3.new(characterPos.X, 0, characterPos.Z) - Vector3.new(portal.Position.X, 0, portal.Position.Z)).Magnitude)
 	end)
+end
+
+function Stage:Action()
+	self:CreateBlackRoomContent()
 end
 
 function Stage:SubscribeEvents()
@@ -107,6 +133,7 @@ function Stage:Init()
 
 	self:CreateCorridor()
 	self:Setup()
+	self:Action()
 
 	repeat wait() until self.IsReady
 
