@@ -32,9 +32,12 @@ local function createRoom(parent, roomProperties, isCorridor, ...)
 		wall.Color = Color3.new(0.478431, 0.788235, 0.466666)
 		wall.Name = "wall"
 		if isCorridor and side[2] ~= 0 then
-			table.insert(..., wall)
-			wall.Size += Vector3.new(2, 0, 2)
-			wall.CanCollide = false
+			local portal = wall:Clone()
+			portal.Parent = model
+			table.insert(..., portal)
+			portal.Size += Vector3.new(0, 0, 3)
+			portal.CanCollide = false
+			portal.Position = wall.Position + Vector3.new(0,0,side[2] < 0 and portal.Size.Z / 2 or -portal.Size.Z / 2)
 		end
 	end
 
@@ -73,6 +76,15 @@ function Stage:Setup()
 	self.Game.Player.Character:ScaleTo(0.1)
 	local colorCorrection = Instance.new("ColorCorrectionEffect")
 	colorCorrection.Parent = Lighting
+	self.Game.PlayerManager.SetupCharacter(self.Game.Player, {
+		Character = {
+			WalkSpeed = 16,
+		}, 
+		Camera = {
+			FieldOfView = 140
+		}
+	})
+
 end
 
 function Stage:CreateCorridor()
@@ -80,8 +92,8 @@ function Stage:CreateCorridor()
 	corridorModel.Parent, blackRoom.Parent = workspace, workspace
 
 	self.BlackRoom = createRoom(blackRoom, {
-		roomSize = 10,
-		wallHeight = 10,
+		roomSize = 50,
+		wallHeight = 20,
 		material = Enum.Material.Rubber,
 	}, false)
 
@@ -99,8 +111,13 @@ function Stage:CreateCorridor()
 end
 
 function Stage:CreateCorridorContent(corridor, teleportWall, returnWall)
+
 	local teleports = {self.CorridorTeleports[1], self.CorridorTeleports[2]}
 	table.remove(teleports, table.find(teleports, teleportWall, 1))
+
+	local barriers = Instance.new('Model')
+	barriers.Parent = corridor
+
 	local touchConnect
 	touchConnect = teleports[1].Touched:Connect(function(hitPart)
 		if self.Game.Player == game.Players:GetPlayerFromCharacter(hitPart.Parent) then
@@ -108,14 +125,25 @@ function Stage:CreateCorridorContent(corridor, teleportWall, returnWall)
 			game:GetService("TweenService")
 				:Create(
 					Lighting:FindFirstChild("ColorCorrection"),
-					TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, true),
+					TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, true),
 					{ Brightness = 3 }
 				)
 				:Play()
 			self.Game.Player.Character:MoveTo(returnWall.Position)
+			barriers:Destroy()
 			self:CreateBlackRoomContent()
 		end
 	end)
+
+	local cf, s = corridor:GetBoundingBox()
+
+	for i = 1, math.random(10, 15) do
+		local pos = Vector3.new(math.random((cf.X - s.X / 2), (cf.X + s.X / 2)), math.random((cf.Y - s.Y / 2), (cf.Y + s.Y / 2)), math.random((cf.Z - s.Z / 2), (cf.Z + s.Z / 2)))
+		-- local pos = Vector3.new(math.random((cf.X - s.X / 2) + 10, (cf.X + s.X / 2) - 10), math.random((cf.Y - s.Y / 2) + 10, (cf.Y + s.Y / 2) - 10), 10)
+		local size = Vector3.new(math.random(1, s.X / 2), math.random(1, s.Y), math.random(1, s.Z / 2))
+		local barrier = createPart(barriers, pos, size)
+		barrier.Orientation = Vector3.new(math.random(-360, 360), math.random(-360, 360), math.random(-360, 360))
+	end
 end
 
 function Stage:CreateBlackRoomContent()
@@ -127,27 +155,29 @@ function Stage:CreateBlackRoomContent()
 			obj.CanCollide = true
 		end
 	end
-	local currentWall = walls[math.random(#walls)]
-	currentWall.Material = Enum.Material.Neon
-	currentWall.Color = Color3.new(1, 1, 1)
-	local defaltSize = currentWall.Size
-	currentWall.Size += Vector3.new(2, 0, 2)
-	currentWall.CanCollide = false
+	local portalWall = walls[math.random(#walls)]:Clone()
+	portalWall.Parent = self.BlackRoom
+	portalWall.Material = Enum.Material.Neon
+	portalWall.Color = Color3.new(1, 1, 1)
+	local cf, s = self.BlackRoom:GetBoundingBox()
+	portalWall.Position += Vector3.new(portalWall.Position.X < cf.X and 5 or (portalWall.Position.X > cf.X and -5 or 0), 0, portalWall.Position.Z < cf.Z and 5 or (portalWall.Position.Z > cf.Z and -5 or 0))
+	portalWall.Size += Vector3.new(portalWall.Position.Z == cf.Z and 5 or 0, 0, portalWall.Position.X == cf.X and 5 or 0)
+	portalWall.CanCollide = false
 	local touchConnect
-	touchConnect = currentWall.Touched:Connect(function(hitPart)
+	touchConnect = portalWall.Touched:Connect(function(hitPart)
 		if self.Game.Player == game.Players:GetPlayerFromCharacter(hitPart.Parent) then
 			touchConnect:Disconnect()
 			game:GetService("TweenService")
 				:Create(
 					Lighting:FindFirstChild("ColorCorrection"),
-					TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, true),
+					TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, true),
 					{ Brightness = 3 }
 				)
 				:Play()
-			currentWall.Size = defaltSize
 			local teleportWall = self.CorridorTeleports[math.random(#self.CorridorTeleports)]
-			self:CreateCorridorContent(self.Corridor, teleportWall, currentWall)
+			self:CreateCorridorContent(self.Corridor, teleportWall, portalWall)
 			self.Game.Player.Character:MoveTo(teleportWall.Position)
+			portalWall:Destroy()
 		end
 	end)
 end
