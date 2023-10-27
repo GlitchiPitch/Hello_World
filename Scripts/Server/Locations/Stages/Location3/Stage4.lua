@@ -17,12 +17,12 @@ local function createRoom(parent, roomProperties, isCorridor, ...)
 
 	for i, side in pairs(sides) do
 		local pos = Vector3.new(
-			side[1] * roomProperties.roomSize / 2,
+			side[1] * roomProperties.roomSize / (isCorridor and 100 or 2),
 			roomProperties.wallHeight / 2,
 			side[2] * roomProperties.roomSize / (isCorridor and 1 or 2)
 		)
 		local size = Vector3.new(
-			side[2] == 0 and 1 or math.abs(side[2] * roomProperties.roomSize),
+			side[2] == 0 and 1 or math.abs(side[2] * roomProperties.roomSize / (isCorridor and 50 or 1)),
 			roomProperties.wallHeight,
 			side[1] == 0 and 1
 				or math.abs(side[1] * roomProperties.roomSize) + (isCorridor and roomProperties.roomSize or 0)
@@ -73,12 +73,12 @@ function Stage.Create(game_)
 end
 
 function Stage:Setup()
-	self.Game.Player.Character:ScaleTo(0.1)
+	self.Game.Player.Character:ScaleTo(0.2)
 	local colorCorrection = Instance.new("ColorCorrectionEffect")
 	colorCorrection.Parent = Lighting
 	self.Game.PlayerManager.SetupCharacter(self.Game.Player, {
 		Character = {
-			WalkSpeed = 16,
+			WalkSpeed = 8,
 		}, 
 		Camera = {
 			FieldOfView = 140
@@ -100,17 +100,17 @@ function Stage:CreateCorridor()
 	blackRoom:PivotTo(self.SpawnPivot[1] * CFrame.new(0, -self.SpawnPivot[2].Y, 0)) --* CFrame.new(0, -50, 0)
 
 	self.Corridor, self.CorridorTeleports = createRoom(corridorModel, {
-		roomSize = 25,
+		roomSize = 400,
 		wallHeight = 10,
 		material = Enum.Material.Rubber,
 	}, true, {})
 
-	corridorModel:PivotTo(self.SpawnPivot[1] * CFrame.new(0, -self.SpawnPivot[2].Y, 100)) -- * CFrame.new(0, -50, 100)
+	corridorModel:PivotTo(self.SpawnPivot[1] * CFrame.new(0, -self.SpawnPivot[2].Y, 450)) -- * CFrame.new(0, -50, 100)
 	self.CorridorTeleports[1].Material, self.CorridorTeleports[1].Color = Enum.Material.Neon, Color3.new(1, 1, 1)
 	self.CorridorTeleports[2].Material, self.CorridorTeleports[2].Color = Enum.Material.Neon, Color3.new(1, 1, 1)
 end
 
-function Stage:CreateCorridorContent(corridor, teleportWall, returnWall)
+function Stage:CreateCorridorContent(corridor, teleportWall)
 
 	local teleports = {self.CorridorTeleports[1], self.CorridorTeleports[2]}
 	table.remove(teleports, table.find(teleports, teleportWall, 1))
@@ -129,7 +129,7 @@ function Stage:CreateCorridorContent(corridor, teleportWall, returnWall)
 					{ Brightness = 3 }
 				)
 				:Play()
-			self.Game.Player.Character:MoveTo(returnWall.Position)
+			self.Game.Player.Character:MoveTo(self.BlackRoom:GetPivot().Position)
 			barriers:Destroy()
 			self:CreateBlackRoomContent()
 		end
@@ -137,12 +137,11 @@ function Stage:CreateCorridorContent(corridor, teleportWall, returnWall)
 
 	local cf, s = corridor:GetBoundingBox()
 
-	for i = 1, math.random(10, 15) do
-		local pos = Vector3.new(math.random((cf.X - s.X / 2), (cf.X + s.X / 2)), math.random((cf.Y - s.Y / 2), (cf.Y + s.Y / 2)), math.random((cf.Z - s.Z / 2), (cf.Z + s.Z / 2)))
-		-- local pos = Vector3.new(math.random((cf.X - s.X / 2) + 10, (cf.X + s.X / 2) - 10), math.random((cf.Y - s.Y / 2) + 10, (cf.Y + s.Y / 2) - 10), 10)
-		local size = Vector3.new(math.random(1, s.X / 2), math.random(1, s.Y), math.random(1, s.Z / 2))
+	for i = 1, s.Z / 15 do
+		local pos = Vector3.new(math.random((cf.X - s.X / 2), (cf.X + s.X / 2)), cf.Y, (cf.Z - s.Z / 2) + 15 * i)
+		local size = Vector3.new(5,s.Y,10) --Vector3.new(math.random(1, s.X / 2), math.random(1, s.Y), math.random(1, s.Z / 2))
 		local barrier = createPart(barriers, pos, size)
-		barrier.Orientation = Vector3.new(math.random(-360, 360), math.random(-360, 360), math.random(-360, 360))
+		-- barrier.Orientation = Vector3.new(math.random(-360, 360), math.random(-360, 360), math.random(-360, 360))
 	end
 end
 
@@ -175,7 +174,7 @@ function Stage:CreateBlackRoomContent()
 				)
 				:Play()
 			local teleportWall = self.CorridorTeleports[math.random(#self.CorridorTeleports)]
-			self:CreateCorridorContent(self.Corridor, teleportWall, portalWall)
+			self:CreateCorridorContent(self.Corridor, teleportWall)
 			self.Game.Player.Character:MoveTo(teleportWall.Position)
 			portalWall:Destroy()
 		end
