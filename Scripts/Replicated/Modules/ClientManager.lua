@@ -16,11 +16,14 @@ StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
 
 local CONNECT
+local SETUP_CAMERA_CONNECT
 
+local Camera = workspace.CurrentCamera
+Camera.CameraType = Enum.CameraType.Scriptable
 
 local ClientManager = {}
 
-Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
+SETUP_CAMERA_CONNECT = Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, propertyList)
     local canRunning = true
     
     if propertyList.Character.CanRunning ~= nil then canRunning = propertyList.Character.CanRunning end
@@ -29,9 +32,6 @@ Events.Remotes.SetupCamera.OnClientEvent:Connect(function(components: table, pro
     local Sensitivity = 0.6
     local Smoothness = 0.05
     local HeadOffset = CFrame.new(0,1,0)
-
-    local Camera = workspace.CurrentCamera
-    Camera.CameraType = Enum.CameraType.Scriptable
     
     UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     
@@ -168,6 +168,17 @@ Events.Remotes.UpdateClient.OnClientEvent:Connect(function(action, ...)
     elseif action == 'sendChatMessage' then
         local message = ...
         StarterGui:SetCore( "ChatMakeSystemMessage",  { Text = message, Color = Color3.new(1,1,1), Font = Enum.Font.Arial, FontSize = Enum.FontSize.Size60 } )
+    elseif action == 'setCameraPos' then
+        if SETUP_CAMERA_CONNECT and SETUP_CAMERA_CONNECT.Connected then SETUP_CAMERA_CONNECT:Disconnect() end
+        
+        local pos = ...
+        Camera.Position = pos
+    elseif action == 'tweenCam' then
+        if SETUP_CAMERA_CONNECT and SETUP_CAMERA_CONNECT.Connected then SETUP_CAMERA_CONNECT:Disconnect() end
+        local t, target = ...
+        local tween = game:GetService('TweenService'):Create(Camera, TweenInfo.new(t), target)
+        tween:Play()
+        tween.Completed:Wait()
     end
 end)
 

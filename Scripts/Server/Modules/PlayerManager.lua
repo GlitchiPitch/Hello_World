@@ -10,6 +10,8 @@ StarterPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 
 local PlayerManager = {}
 
+PlayerManager.Result = nil
+
 function PlayerManager.SetupCharacter(player, propertyList)
     local character = player.Character
     local humanoid = character:FindFirstChild("Humanoid")

@@ -1,5 +1,7 @@
 local Lighting = game:GetService("Lighting")
 -- THIS IS FINAL STAGE --
+local CORRIDOR_COLOR = Color3.new(1,0,0)
+local TARGET_VALUE = 10
 
 local function createPart(parent, position, size)
 	local part = Instance.new("Part")
@@ -29,7 +31,7 @@ local function createRoom(parent, roomProperties, isCorridor, ...)
 		)
 		local wall = createPart(model, pos, size)
 		wall.Material = roomProperties.material
-		wall.Color = Color3.new(0.478431, 0.788235, 0.466666)
+		wall.Color = CORRIDOR_COLOR
 		wall.Name = "wall"
 		if isCorridor and side[2] ~= 0 then
 			local portal = wall:Clone()
@@ -47,13 +49,43 @@ local function createRoom(parent, roomProperties, isCorridor, ...)
 		createPart(model, pivot.Position + Vector3.new(0, roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
 	local bottom =
 		createPart(model, pivot.Position + Vector3.new(0, -roomSize.Y / 2, 0), Vector3.new(roomSize.X, 1, roomSize.Z))
-	roof.Color, bottom.Color = Color3.new(0.5, 0.5, 0.5), Color3.new(0.5, 0.5, 0.5)
+	roof.Color, bottom.Color = CORRIDOR_COLOR, CORRIDOR_COLOR
 	roof.Material, bottom.Material = roomProperties.material, roomProperties.material
 	roof.Name, bottom.Name = "roof", "bottom"
 	roof.CanCollide = false
 
 	return model, isCorridor and ...
 end
+
+local MONSTER = {}
+
+MONSTER.__index = MONSTER
+
+function MONSTER.Create(game_, stage_)
+	local self = setmetatable({}, MONSTER)
+	self.Body = Instance.new('Part')
+	self.Stage = stage_
+	self:Init()
+	return self
+end
+
+function MONSTER:Init()
+	self:CheckTouch()
+end
+
+function MONSTER:CheckTouch()
+	self.Body.Touched:Connect(function(hitPart)
+		if hitPart.Parent == self.Game.Player.Character then
+			self.Stage.Saved = false
+			self.Game.Player.Character:FindFirstChild('Humanoid').Health = 0
+		end
+	end)
+end
+
+
+
+
+
 
 local Stage = {}
 
@@ -62,10 +94,13 @@ Stage.__index = Stage
 function Stage.Create(game_)
 	local self = setmetatable({}, Stage)
 	self.Game = game_
+	self.Monster = MONSTER.Create(self.Game, self)
 	self.SpawnPivot = nil
 	self.BlackRoom = nil
 	self.Corridor = nil
 
+	self.StepsCount = 0
+	self.Saved = true
 	self.IsReady = false
 
 	self:Init()
@@ -84,7 +119,21 @@ function Stage:Setup()
 			FieldOfView = 140
 		}
 	})
+	self:CheckDeath()
+end
 
+function Stage:CheckDeath()
+	self.Game.Player.Character:FindFirstChild('Humanoid').Died:Connect(function()
+		if self.Saved then 
+			print('The good over') 
+			self.Game.PlayerManager.Result = true
+		else 
+			print('The bad over')
+			self.Game.PlayerManager.Result = false
+		end
+		self.IsReady = true
+		-- self.Game.PlayerManager.Result = false
+	end)
 end
 
 function Stage:CreateCorridor()
@@ -141,17 +190,19 @@ function Stage:CreateCorridorContent(corridor, teleportWall)
 		local pos = Vector3.new(math.random((cf.X - s.X / 2), (cf.X + s.X / 2)), cf.Y, (cf.Z - s.Z / 2) + 15 * i)
 		local size = Vector3.new(5,s.Y,10) --Vector3.new(math.random(1, s.X / 2), math.random(1, s.Y), math.random(1, s.Z / 2))
 		local barrier = createPart(barriers, pos, size)
+		barrier.Color = CORRIDOR_COLOR
 		-- barrier.Orientation = Vector3.new(math.random(-360, 360), math.random(-360, 360), math.random(-360, 360))
 	end
 end
 
 function Stage:CreateBlackRoomContent()
+	self.StepsCount += 1
 	local walls = {}
 	for _, obj in pairs(self.BlackRoom:GetChildren()) do
 		if obj.Name == "wall" then
 			table.insert(walls, obj)
 			obj.Color = Color3.new(0, 0, 0)
-			obj.CanCollide = true
+			obj.CanCollide = self.StepsCount == TARGET_VALUE and false or true
 		end
 	end
 	local portalWall = walls[math.random(#walls)]:Clone()
@@ -190,13 +241,14 @@ function Stage:SubscribeEvents()
 	-- self.Game.Events.Remotes.
 end
 
-function Stage:FinishAction(result)
-	if result == "Fail" then
-		print("not ok")
-	elseif result == "Success" then
-		print("ok")
-	end
-end
+-- function Stage:FinishAction()
+-- 	if self.Game.PlayerManager.Result ~= nil then
+-- 		print(self.Game.PlayerManager.Result)
+-- 	else
+-- 		self.Game.PlayerManager.Result = true
+-- 		print(self.Game.PlayerManager.Result)
+-- 	end
+-- end
 
 function Stage:Init()
 	print("start final stage")
@@ -209,9 +261,7 @@ function Stage:Init()
 	self:Setup()
 	self:Action()
 
-	repeat
-		wait()
-	until self.IsReady
+	repeat wait() until self.IsReady
 
 	print("finish final stage")
 end
