@@ -71,7 +71,7 @@ function Stage:Pets()
             if value then 
                 savedPets += 1
                 self.Game.Events.Remotes.UpdateClient:FireClient(self.Game.Player, savedPets)
-                game:GetService('CollectionService'):RemoveTag(pet, 'Interact')
+                CollectionService:RemoveTag(pet, 'Interact')
                 self:CreateVoid(self.Game.Player.Character.HumanoidRootPart.CFrame, savedPets)
             end
         end)

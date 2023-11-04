@@ -16,7 +16,9 @@ function Game.newGame(player)
     local self = setmetatable({}, Game)
 
     self.Player = player
-    self.LocationIndex = 3
+    self.LocationIndex = 1
+    self.Events = {}
+    self.PlayerManager = nil
 
     self:Init()
 
@@ -27,7 +29,7 @@ end
 function Game:Init()
     self:Preload()
     self.Events.Remotes.StartGame.OnServerEvent:Wait()
-    -- print('Start Game')
+    print('Start Game')
     self:StartGame()
 end
 
@@ -41,12 +43,16 @@ function Game:Preload()
 end
 
 function Game:StartGame()
-    -- for i = 2, #Locations:GetChildren() do
+    -- for i = 1, #Locations:GetChildren() do
     --     print('start Location')
-    local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
-    location.Create(self)
-        -- self.LocationIndex += 1
+    --     local location = require(Locations:FindFirstChild('Location' .. self.LocationIndex)) 
+    --     location.Create(self)
+    --     self.LocationIndex += 1
     -- end
+
+    for _, location in pairs(Locations:GetChildren()) do
+        require(location).Create(self)
+    end
 end
 
 return Game

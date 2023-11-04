@@ -1,10 +1,10 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocationResourses = game:GetService('ServerStorage').Resourses.Location1
 -- local Maps = ReplicatedStorage:WaitForChild('Maps')
 local Location = {}
 
 Location.__index = Location
 
+Location.Name = 'Location1'
+Location.LocationResourses = game:GetService('ServerStorage').Resourses.Location1
 Location.PlayerProperty = {
     Character = {
         WalkSpeed = 8
@@ -15,7 +15,7 @@ Location.PlayerProperty = {
     }
 }
 
-Location.Name = 'Location1'
+
 
 function Location.Create(game_)
     local self = setmetatable({}, Location)
@@ -56,7 +56,7 @@ function Location:SetupStages()
     coroutine.wrap(function()
         for i, stage in pairs(self.Stages:GetChildren()) do
             local currentStage = require(stage)
-            currentStage.Create(self.Game, self.Map, LocationResourses)
+            currentStage.Create(self.Game, self.Map, self.LocationResourses)
         end
         self.IsReady = true
     end)()

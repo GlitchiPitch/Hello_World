@@ -23,7 +23,22 @@ function Location:Init()
 	repeat wait() until self.IsFinal
 
 	-- turn off game
+	self:Thanks()
 
+end
+
+function Location:Thanks()
+	local gui = Instance.new('ScreenGui')
+	gui.Parent = self.Game.Player.PlayerGui
+	gui.IgnoreGuiInset = true
+	local text = Instance.new('TextLabel')
+	text.Parent = gui
+	text.Size = UDim2.fromScale(1,1)
+	text.BackgroundColor3 = Color3.new(0,0,0)
+	text.TextScaled = true
+	text.TextStrokeTransparency = 0
+	text.TextColor3 = Color3.new(1,1,1)
+	text.Text = 'Thanks for playing'
 end
 
 return Location
