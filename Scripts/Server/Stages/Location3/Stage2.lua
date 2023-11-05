@@ -1,6 +1,7 @@
 local Lighting = game:GetService("Lighting")
 -- at this stage we will need make a cosmos 
 
+local MAIN_COLOR = Color3.new(0.905882, 0.894117, 0.721568)
 
 local function createPart(parent, position, size)
 	local part = Instance.new("Part")
@@ -17,12 +18,10 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(location)
     local self = setmetatable({}, Stage)
 
-    self.Game = game_
-	self.Map = map
-	self.Resourses = resourses
+    self.Game = location.Game
 	self.IsReady = false
     self.PlayerSpawnPoint = nil
 	self.Keys = {}
@@ -34,7 +33,7 @@ function Stage.Create(game_, map, resourses)
     return self
 end
 
-local MAIN_COLOR = Color3.new(0.905882, 0.894117, 0.721568)
+
 
 function Stage:Init()
     print("stage 1 is started")

@@ -12,7 +12,7 @@ function Location.Create(game_)
 
     }, Location)
     
-    self:Init()
+    
 
     return self
 end

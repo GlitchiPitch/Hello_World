@@ -12,12 +12,10 @@ voidFolder.Parent = workspace
 local Stage = {}
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(location)
     local self = setmetatable({}, Stage)
 
-    self.Game = game_
-    self.Map = map
-    self.Resourses = resourses
+    self.Game = location.Game
     self.IsReady = false
 
     self.PetsFolder = petsFolder

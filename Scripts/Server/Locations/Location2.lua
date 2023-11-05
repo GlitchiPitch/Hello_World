@@ -1,4 +1,5 @@
 local Lighting = game:GetService("Lighting")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local LocationResourses = game:GetService('ServerStorage').Resourses.Location2
 
@@ -33,7 +34,8 @@ function Location.Create(game_)
     self.Game = game_
 
     self.Map = Instance.new('Part') -- Maps:FindFirstChild(Location1)
-    self.Stages = script.Parent.Stages:FindFirstChild(Location.Name)
+    self.Stages = ServerScriptService.Stages:FindFirstChild(Location.Name)
+    self.CurrentPortal = nil
     self.StageIndex = 1
     self.IsReady = false
 
@@ -49,13 +51,10 @@ function Location:Init()
 
     self:Setup()
 
+    self:CreatePortals()
+
     self.Game.Player:LoadCharacter() -- this is temporary solution
     self.Game.PlayerManager.SetupCharacter(self.Game.Player, Location.PlayerProperty)
-
-    -- self.Event.Event:Connect(function()
-    --     print('event')
-    --     self.IsReady = true
-    -- end)
 
     repeat wait() until self.IsReady
     print('Location 2 is ready')
@@ -69,19 +68,7 @@ function Location:Setup()
     Lighting.OutdoorAmbient = AMBIENT
     Lighting.Ambient = AMBIENT
 
-    self:CreatePortals()
-
 end
-
--- function Location:SetupStages()
---     coroutine.wrap(function()
---         for i, stage in pairs(self.Stages:GetChildren()) do
---             local currentStage = require(stage)
---             currentStage.Create(self.Game, self.Map, LocationResourses)
---         end
---         self.IsReady = true
---     end)()
--- end
 
 function Location:CreatePortals()
     for i = 1, 2 do
@@ -100,17 +87,12 @@ function Location:CreatePortals()
         portal.Touched:Connect(function(hitPart)
             if not game.Players:GetPlayerFromCharacter(hitPart.Parent) then return end
             portal.CanTouch = false
-            local currentStage = require(self.Stages:FindFirstChild('Stage' .. self.StageIndex))
-            -- if self.StageIndex == 2 then currentStage.Create(self.Game, self.Map, LocationResourses, portal, self)
-            -- else currentStage.Create(self.Game, self.Map, LocationResourses, portal) end
-            currentStage.Create(self.Game, self.Map, LocationResourses, portal)
+            self.CurrentPortal = portal
+            require(self.Stages:FindFirstChild('Stage' .. self.StageIndex)).Create(self)
             self.StageIndex += 1
         end)
     end
-    -- порталы буду тспавниться на определенных точках но пока рандом
 
-    -- можно взять вью порты потом сделать на их основе картинки и повесить их на парты как декал. это план б
-    -- план а это сделать небольшие декорации за картой, которые будут имитировать локацию 2.1
 end
 
 

@@ -2,7 +2,6 @@ local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 
-local Stage1_1 = require(script.Parent.Stage1_1)
 
 -- fix color correction
 -- fix gradient
@@ -24,16 +23,15 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses, portal)
+function Stage.Create(location)
 	local self = setmetatable({}, Stage)
 
-	self.Game = game_
-	self.Map = map
-	self.Resourses = resourses
+	self.Location = location
+	self.Game = location.Game
 	self.IsReady = true
 	self.Level = 1
     self.Sounds = {}
-	self.StagePortal = portal
+	self.StagePortal = location.CurrentPortal
 
 	self.PlayerSpawnPoint = nil
 	self:Init()
@@ -69,7 +67,7 @@ function Stage:FinishAction()
 		for _, obj in pairs(self.Teleports) do
 			obj:Destroy()
 		end
-		local stage1_1 = Stage1_1.Create(self.Game, self.Map, self.Resourses, self.StagePortal)
+		require(script.Parent.Stage1_1).Create(self.Location)
 	end)
 end
 

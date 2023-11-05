@@ -11,16 +11,14 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses, portal)
+function Stage.Create(location)
     local self = setmetatable({}, Stage)
 
-	self.Game = game_
-	self.Map = map
-	self.Resourses = resourses
+	self.Game = location.Game
 	self.IsReady = true
 	self.Level = 1
     self.Sounds = {}
-    self.StagePortal = portal
+    self.StagePortal = location.CurrentPortal
 	self.PlayerSpawnPoint = nil
 	self:Init()
 
@@ -73,8 +71,6 @@ function Stage:ChangePlayerCamera()
     self.Game.PlayerManager.SetupCharacter(self.Game.Player, {Character = {WalkSpeed = math.random(20, 100)}, Camera = {FieldOfView = math.random(80, 200)}})
     
 end
-
--- for calculating colors use hsv or :lerp
 
 function Stage:CalculateColor(prevColor, color)
 

@@ -16,17 +16,16 @@ local MONSTER_COLOR = Color3.new(0.8, 0.5, 0.9)
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(location)
     local self = setmetatable({}, Stage)
 
-    self.Game = game_
-    self.Map = map
-    self.Resourses = resourses
+    self.Game = location.Game
     self.IsReady = false
 
     self.Level = 1
 
     self.PlayerSpawnPoint = nil
+
     self:Init()
 
     return self
@@ -59,6 +58,11 @@ function Stage:Setup()
     Lighting.OutdoorAmbient = AMBIENT
     Lighting.Ambient = AMBIENT
 
+    -- local ColorCorrectionEffect = Instance.new('ColorCorrectionEffect')
+    -- ColorCorrectionEffect.Parent = Lighting
+
+    -- ColorCorrectionEffect.Brightness = -.5
+
     self:AddLightToCharacter()
 end
 
@@ -81,8 +85,6 @@ end
 
 function Stage:SpawnRoom()
     print('Room is created')
-    -- возможно переписать без удаления и создания новой комнаты, просто обращаться к меодельке конмнаты и именять позицию и размеры, можно еще это сделать с твином, 
-    -- но контент надо удалять или тоже просто пермещать, посмотрим
     local properties = {
         wallsPositionValue = 50 + (50 * .3),
         wallHeight = 15 + (15 * .3)
@@ -95,6 +97,7 @@ end
 function Stage:CreateRoom(properties)
     local value = properties.wallsPositionValue
     local Y = 10
+
     local wallHeight = properties.wallHeight
     local wallsPositions = {
                 {value, Y, 0},
@@ -102,9 +105,10 @@ function Stage:CreateRoom(properties)
                 {-value, Y, 0},
                 {0, Y, -value},
             }
+
     local model = Instance.new('Model')
     model.Parent = workspace
-    -- model:PivotTo(Location.CFrame)  здесь взять центр локации в трех векторах и спавнить по середине эту комнату.
+
     for i = 1, 6 do
         local wall = Instance.new('Part')
         wall.Parent = model
@@ -207,20 +211,18 @@ function Stage:CreateContent(room, properties)
         part.Name = name
         part.Anchored = true
 
-        if name == 'target' then
-            setupTarget(part)
-        elseif name == 'spawn' then
-            setupSpawnPoint(part)
-        elseif name == 'barrier' then
-            setupBarrier(part)
+        if name == 'target' then setupTarget(part)
+        elseif name == 'spawn' then setupSpawnPoint(part)
+        elseif name == 'barrier' then setupBarrier(part) 
         end
 
         return part
     end
-    local a = math.random(1,10) --math.random(#nodes)
+
+    local a = math.random(1,10)
     local spawnIndex = a  
     a = math.random(#nodes / 2, #nodes)
-    local targetIndex = a -- spawnIndex ~= a and a or  a - 1
+    local targetIndex = a
 
     local monsterIndex = targetIndex - 1
 

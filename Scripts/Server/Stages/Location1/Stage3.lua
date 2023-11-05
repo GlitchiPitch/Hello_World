@@ -14,13 +14,12 @@ local Stage = {}
 
 Stage.__index = Stage
 
-function Stage.Create(game_, map, resourses)
+function Stage.Create(location)
     local self = setmetatable({}, Stage)
 
-    self.Game = game_
-    self.Map = map
-    self.Resourses = resourses
+    self.Game = location.Game
     self.IsReady = false
+    self.Monster = self:CreateMonster()
 
     self:Init()
 
@@ -29,10 +28,14 @@ end
 
 function Stage:Init()
     print('Stage 3 init')
+    
     self:Setup()
-    -- self:Check()
+    self:Check()
+
     repeat wait() until self.IsReady
-    -- self.CheckMonster:Disconnect()
+    
+    self.CheckMonster:Disconnect()
+
     self:ShowPoliceWarning()
 end
 
@@ -40,20 +43,18 @@ function Stage:CreateMonster()
     local monster = Instance.new('Part')
     monster.Parent = self.Map
     -- monster.Position = 
+
+    return monster
 end
 
 function Stage:Setup()
     Lighting.ClockTime = 14
-
-    wait(5)
-
-    self.IsReady = true
 end
 
 
 function Stage:Check()
     -- this is working on client side
-    local npc = workspace.AlreadyPro
+    local npc = self.Monster
     local char = self.Game.Player.Character
 
     self.CheckMonster = RunService.RenderStepped:Connect(function()

@@ -1,4 +1,5 @@
 
+local ServerScriptService = game:GetService('ServerScriptService')
 local LocationResourses = game:GetService('ServerStorage').Resourses.Location3
 
 -- next stages without portal and something like these
@@ -30,7 +31,7 @@ function Location.Create(_game)
     -- self.Resourses = LocationResourses
     self.Events = self.Game.Events
 
-    self.Stages = script.Parent.Stages:FindFirstChild(Location.Name)
+    self.Stages = ServerScriptService.Stages:FindFirstChild(Location.Name)
     self.StageIndex = 1
     self.IsReady = false
 
@@ -44,36 +45,18 @@ function Location:Init()
     
     self.Game.Player:LoadCharacter()
     self.Game.PlayerManager.SetupCharacter(self.Game.Player, Location.PlayerProperty)
-    self:ChangeStage()
+    self:SetupStages()
 
     repeat wait() until self.IsReady
     print('Location 3 is over')
 
 end
 
--- function Location:FinishAction()
-    
--- end
 
-function Location:SubscribeEvents()
-    -- self.Events.
-end
-
-function Location:ChangeStage()
-    local a = self.Stages:GetChildren()
-    for i = 2, #a do
-        local currentStage = require(a[i])
-        currentStage.Create(self.Game)
+function Location:SetupStages()
+    for i, stage in pairs(self.Stages:GetChildren()) do
+        require(stage).Create(self)
     end
-    -- for i, stage in pairs(self.Stages:GetChildren()) do
-    --     local currentStage = require(stage)
-    --     currentStage.Create(self.Game)
-    -- end
-
-    -- local a = self.Stages:GetChildren()
-    -- local b = require(a[2])
-    -- b.Create(self.Game)
-    -- -- self.IsReady = true
 end
 
 return Location

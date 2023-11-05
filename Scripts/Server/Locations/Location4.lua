@@ -9,6 +9,8 @@ function Location.Create(_game)
 
 	self.Game = _game
 	self.IsFinal = false
+
+	self:Init()
 	return self
 end
 

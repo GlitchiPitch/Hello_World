@@ -15,8 +15,6 @@ Location.PlayerProperty = {
     }
 }
 
-
-
 function Location.Create(game_)
     local self = setmetatable({}, Location)
 
@@ -55,8 +53,7 @@ end
 function Location:SetupStages()
     coroutine.wrap(function()
         for i, stage in pairs(self.Stages:GetChildren()) do
-            local currentStage = require(stage)
-            currentStage.Create(self.Game, self.Map, self.LocationResourses)
+            require(stage).Create(self)
         end
         self.IsReady = true
     end)()
